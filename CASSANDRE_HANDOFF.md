@@ -1,0 +1,146 @@
+# Cassandre — handoff
+
+Dernière mise à jour : 10 novembre 2026
+Projet : `Repwise-restauration`
+Branche locale : `feature/cassandre-whatsapp-agents`
+
+## État en bref
+
+Le travail Cassandre est local. Les deux migrations restent non appliquées. Le projet Supabase de test `ahcdiqmxlblitbbbqxzo` est maintenant disponible, actif mais vierge; aucune configuration Meta de test n'a été utilisée, et rien n'a été déployé ni publié. La branche locale ne contient pas encore de commit : le code restauré apparaît non suivi par Git, tandis que `main` distant ne contient que le README.
+
+## Travail déjà présent
+
+- Orchestration locale des six agents existants, missions, réservation de tâches, reprises, contrôle qualité et synthèse.
+- Interface Cassandre ajoutée au tableau de bord coach.
+- Fonctions Netlify pour le tableau de bord, les workers, les rapports, la passerelle WhatsApp et les notifications.
+- Migrations locales `20261104202211_ai_generation_quota_and_webhook_idempotency_and_coach_premium_cleanup.sql` et `20261109091437_cassandre_orchestration_whatsapp.sql`, dans cet ordre chronologique. Elles dépendent d'un schéma Repwise/Cassandre préexistant absent du dépôt GitHub.
+- Cette intervention ajoute le suivi `last_inbound_at`, bloque les messages texte libres après la fenêtre WhatsApp de 24 heures et n'autorise alors qu'un modèle préapprouvé explicitement configuré en mode test.
+
+## Vérifications exécutées
+
+- Syntaxe `app.js`, `sw.js` et des fonctions `.mts` : réussie.
+- Tests : 13 au total, 11 réussis, 2 tests Supabase ignorés faute d'instance locale.
+- Tests WhatsApp unitaires : limites de 24 heures, dates invalides/futures et structure du message modèle.
+- Supabase en consultation : aucune branche de développement; les deux versions de migration ne figurent pas dans l'historique de migrations de production.
+- Les tables de `cassandre_private` inspectées ont RLS activé et des droits accordés à `service_role`, sans droits `anon`/`authenticated`. L'absence de politiques pour ces tables est cohérente avec ce modèle de droits; elle doit être revérifiée après migration de test.
+- L'Advisor signale six tables privées avec RLS sans politique, une table `public.stripe_webhook_events` dans la même situation et onze fonctions `SECURITY DEFINER` accessibles à `authenticated`. Ces fonctions existantes doivent être auditées individuellement; aucune modification n'a été faite en production.
+
+## Blocage de sécurité à traiter
+
+La fonction Supabase de production `cassandre-brain` est active en version 2 et vérifie bien le JWT, mais son code n'exige que le rôle `coach`, pas l'identifiant du fondateur. Elle lit des volumes globaux de Repwise et n'applique pas de plafond d'appels IA. Son rapport date également avec UTC. La fonction n'a pas été modifiée. Préparer une copie corrigée et la tester sur une base isolée avant toute publication.
+
+Le contrôle agrégé effectué en consultation n'a trouvé aucun coach avec un accès offert ou une période Premium future sans abonnement. La migration qui restreint `a_acces_premium()` aux comptes clients n'a pas été appliquée.
+
+## WhatsApp
+
+- Aucune requête Meta n'a été envoyée. Il manque les identifiants d'environnement de test et les noms/langues de modèles approuvés.
+- `WHATSAPP_AUTH_TEMPLATE_NAME` et `WHATSAPP_AUTH_TEMPLATE_LANGUAGE` doivent désigner un modèle d'authentification approuvé avec un paramètre de code compatible.
+- `WHATSAPP_NOTIFICATION_TEMPLATE_NAME` et `WHATSAPP_NOTIFICATION_TEMPLATE_LANGUAGE` doivent désigner un modèle de notification approuvé avec un paramètre de corps.
+- Vérifier réception, signature, numéro fondateur, déduplication, réponse, tâche et notification uniquement dans Meta Test. Les tests unitaires ne prouvent pas que les modèles existent ou sont approuvés.
+
+## Build et navigateur
+
+`node_modules`, `netlify.toml` et `supabase/config.toml` sont absents. Le `package.json` ne définit pas de script de build. Aucun navigateur automatisable n'est disponible. Les réglages de build Netlify n'ont pas pu être lus : le connecteur Netlify ne les expose pas et le CLI échoue sur une permission de ses préférences globales. Aucun réglage global n'a été modifié.
+
+## Vérification ciblée du 10 novembre 2026
+
+- Branche confirmée : `feature/cassandre-whatsapp-agents`. Le dernier commit est `fdb5c71` (`Initial commit`); 19 chemins du projet sont non suivis. Le code Cassandre n'est donc pas encore sauvegardé dans l'historique Git.
+- `package.json` contient les dépendances runtime `@anthropic-ai/sdk` et `stripe`, ainsi que `@netlify/functions`; il n'a aucun script de build/test. Les seules migrations du dépôt sont celles datées du 4 et du 9 novembre 2026, dans cet ordre. Elles supposent le schéma Repwise déjà existant, absent du dépôt.
+- Lecture Netlify en consultation : le projet `repwise-coaching` est lié et dispose d'un déploiement courant prêt. L'API de projet et le connecteur ne donnent pas les paramètres de build. La tentative CLI `getSite` a échoué (`EPERM` sur le fichier de préférences Netlify); aucune préférence n'a été modifiée.
+- La liste des variables propres au site Netlify a été consultée sans lire ni afficher leurs valeurs. Elle contient `STRIPE_SECRET_KEY` et `SUPABASE_SERVICE_ROLE_KEY`. Les autres variables requises par le code (dont URL/clé publique Supabase, configuration propriétaire et worker Cassandre, fournisseur IA, Stripe webhook/prix et WhatsApp de test) ne figurent pas dans cette liste du site; d'éventuelles variables partagées d'équipe n'ont pas été vérifiées. Ne pas démarrer d'appel Meta avant qu'un environnement et des modèles de test aient été fournis.
+- Inspection ciblée du worker : les six agents ont des instructions et faits autorisés distincts; le worker collecte des faits agrégés, appelle le modèle, valide le résultat, sauvegarde son état et relance une tâche en cas d'échec. C'est une vérification statique du chemin d'exécution, pas une preuve d'exécution réelle; aucun environnement isolé ni compte coach de test n'est disponible.
+- Aucun fichier applicatif n'a été modifié et aucun test n'a été relancé, car il n'y a pas eu de correction de code. Le dernier résultat de tests connu reste 11 réussis, 2 ignorés, 0 échec; les vérifications de syntaxe connues avaient réussi.
+
+## Sécurisation finale ciblée — 10 novembre 2026
+
+- `requireFounder` compare l'identifiant Supabase authentifié au `CASSANDRE_OWNER_USER_ID` serveur et contrôle le rôle coach côté serveur. Les refus pour identité/profil sont maintenant journalisés sans contenu de commande.
+- Le webhook Meta vérifie HMAC avant traitement et n'accepte que le numéro lié au propriétaire après vérification. Les autres expéditeurs valides Meta sont refusés et journalisés sans enregistrer leur numéro.
+- Les agents restent limités à l'analyse agrégée en lecture seule; les actions financières, suppressions et contacts client n'ont pas de voie d'exécution dans leur worker. Toute nouvelle action sensible devra être bloquée derrière une confirmation renforcée du fondateur dans Repwise.
+- Ajout de `netlify/lib/founder-policy.mjs` et `tests/founder-policy.test.mjs` pour tester la règle d'identité exacte.
+- Campagne exécutée après correction : tous les tests Node disponibles donnent 12 réussis, 2 ignorés (les tests d'intégration quota nécessitent Supabase), 0 échec. La syntaxe de `cassandre.mts` et `whatsapp-webhook.mts` passe. Aucun build, navigateur, appel Meta ou test Supabase n'a été exécuté.
+- Scan ciblé des fichiers frontend : aucune signature courante de clé secrète Stripe, webhook ou clé secrète Supabase détectée. Les valeurs d'environnement n'ont pas été affichées.
+
+## État final et prochaine action
+
+Publication bloquée. Un projet Supabase de test existe mais il est vierge; il manque la configuration Meta de test, le script/réglage de build confirmé et la source locale/versionnée de l'Edge Function `cassandre-brain` actuellement signalée comme insuffisamment restreinte au fondateur. Le compte Netlify expose un déploiement existant prêt, mais cela ne valide pas ce code. Le CLI n'a pas pu lire les paramètres (EPERM sur ses préférences). Les fichiers applicatifs restent non suivis par Git; aucun commit, push, migration, changement de production ou déploiement n'a été effectué.
+
+Prochaine action unique : préparer un schéma fondation Repwise/Cassandre schema-only, avec uniquement des comptes fictifs, pour ce projet Supabase de test vierge. Ne pas appliquer les deux migrations existantes avant d'avoir créé et vérifié leurs prérequis.
+
+## Vérification Supabase de test et Netlify — 10 novembre 2026
+
+- Le projet `ahcdiqmxlblitbbbqxzo` répond avec l'état `ACTIVE_HEALTHY`, PostgreSQL 17.11. L'inventaire en consultation confirme zéro table, zéro migration enregistrée et zéro Edge Function.
+- Ordre de migrations : `20261104202211...` puis `20261109091437...`. La première dépend déjà de `public.profils`, `public.programmes`, `public.stripe_webhook_events`, `auth.users` et de l'API Auth. La seconde dépend du schéma privé `cassandre_private` et des tables fondatrices `agents`, `tasks`, `decisions`, `daily_reports`, `audit_log`. Elles échoueront sur le projet vierge. Aucun fichier de schéma fondation Repwise ni code Supabase Edge Function n'est présent dans `supabase/`; `cassandre-brain` est absent.
+- Les fichiers définissent le quota atomique, les RPC Stripe idempotentes, le verrouillage des tâches (`FOR UPDATE SKIP LOCKED`), reprises, déduplication par identifiants uniques et révocation des droits navigateur. Constats statiques seulement : RLS, RPC et concurrence ne sont pas validés en base.
+- L'audit antérieur indique que l'Edge Function `cassandre-brain` en production vérifie le rôle coach, mais pas l'UID du fondateur; sa source n'est pas versionnée. Ne pas déployer cette fonction avant récupération et correction de sa source, puis test fondateur/coach dans l'environnement isolé.
+- Blocage critique de prévisualisation : `app.js` et `netlify/lib/billing.mts` contiennent un fallback vers le projet Supabase de production. Le frontend n'a pas de paramètre de contexte; un Deploy Preview risquerait d'utiliser les données réelles. Retirer ce fallback et fournir explicitement une configuration de test côté navigateur et fonctions avant tout preview. Les clés n'ont pas été reproduites ici.
+- `npm run build` échoue avec `Missing script: "build"`. Aucun `netlify.toml` ne fixe la commande ou le dossier publié. Aucune dépendance n'a été installée. Les paramètres de build de production restent illisibles avec les outils disponibles.
+- Les tests déjà connus restent 12 réussis, 2 ignorés. Les tests quota d'intégration n'acceptent que `localhost:54321`, pas le projet hébergé. Aucun test n'a été relancé cette intervention.
+- Variables à configurer ultérieurement, sans valeurs dans le dépôt : `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY` (valeurs du projet de test); `CASSANDRE_OWNER_USER_ID`, `CASSANDRE_INTERNAL_TOKEN`, `CASSANDRE_WORKER_ENABLED`; limites `CASSANDRE_DAILY_AI_CALL_LIMIT` et `CASSANDRE_DAILY_AI_TOKEN_LIMIT`; une paire fournisseur/modèle IA; variables Meta sandbox listées dans `docs/CASSANDRE_ARCHITECTURE.md`. Les clés service, tokens et clés fournisseurs sont des secrets. Aucune consommation IA/Meta ne doit être lancée sans plafond et autorisation de coût.
+- Aucun rollback SQL n'est fourni. La migration du 4 novembre efface des droits Premium offerts à des profils coachs; elle doit être testée uniquement sur des profils fictifs, avec snapshot préalable. Aucun rollback inverse n'est déclaré prêt.
+
+### Validations restantes avant production
+
+1. Préparer et vérifier une migration fondatrice schema-only Repwise/Cassandre et les comptes fictifs du projet test.
+2. Supprimer les fallbacks production du frontend et des fonctions; configurer les variables Deploy Preview vers Supabase test.
+3. Appliquer le schéma fondation, puis 20261104 et 20261109 uniquement au test; vérifier contraintes, RLS, permissions et RPC.
+4. Obtenir la source `cassandre-brain`, limiter l'accès à l'UID fondateur et tester avec un compte fondateur et un autre coach fictif.
+5. Activer les tests d'intégration sur l'URL allowlistée du projet test; vérifier quota, workers, reprise, idempotence, audit, six agents et parcours WhatsApp Meta sandbox.
+6. Obtenir les réglages Netlify, réussir build et Deploy Preview sans accès à la production, puis réexaminer coûts, secrets et risques avant publication.
+
+## Phase 1 — isolation et fondation Supabase — 10 novembre 2026
+
+### Changements locaux
+
+- Suppression des valeurs Supabase de repli du frontend et de la facturation. `app.js` reçoit maintenant uniquement la configuration publique d'un endpoint Netlify, et affiche un état d'erreur visible si elle manque.
+- Ajout d'une règle de cible par contexte Netlify : `production` demande toujours une configuration explicite; `deploy-preview`, `branch-deploy`, `dev` et les contextes absents ne peuvent cibler que le projet de test configuré ou un Supabase local. Le contrôle se fonde sur `CONTEXT`, pas `URL` (qui décrit le déploiement courant, y compris une preview).
+- Les fonctions de facturation vérifient la cible avant les appels Supabase. Stripe exige une clé de test hors contexte production. Le webhook, les rapports et les tâches Cassandre vérifient également la cible avant les opérations de données.
+- Ajout de la fonction locale `supabase/functions/cassandre-brain/index.ts`, récupérée en consultation depuis la version existante, puis durcie : JWT vérifié par Supabase Auth, UID comparé à `CASSANDRE_OWNER_USER_ID`, rôle coach exigé, refus journalisés sans jeton ni contenu client, identité du corps ignorée et date de rapport Europe/Paris. Les erreurs retournées au client ne contiennent pas les détails internes du fournisseur ou de la base.
+- Ajout de la migration `20261103000000_repwise_cassandre_foundation.sql`, à appliquer avant les migrations du 4 et du 9 novembre. Elle prépare un sous-ensemble fondation attesté par le schéma observé : profils, programmes, questionnaires/exercices, bilans, séances, objectifs, nutrition/hydratation, alertes, Stripe et tables Cassandre, avec accès navigateur révoqué et accès serveur limité à `service_role`. Elle ne copie aucune donnée réelle; seuls les six rôles d'agents, déjà définis dans le code, sont insérés.
+- Ajout de `supabase/ROLLBACK_TEST_FOUNDATION.md`, qui recommande un snapshot/reset du projet de test plutôt qu'un `DROP` général.
+- Mise à jour de `_headers` pour autoriser Supabase de test dans la CSP; la référence de production conservée dans cette politique CSP est une autorisation réseau, pas un fallback de configuration. Le contrôle serveur refuse la cible de production dans les previews.
+- Le script de configuration du frontend est externalisé dans `runtime-config.js` pour respecter `script-src 'self'`; le service worker a été versionné et inclut ce fichier.
+
+### Vérifications faites
+
+- Tests Node : 22 au total, 20 réussis, 0 échec, 2 ignorés. Les deux tests ignorés sont des intégrations de quota qui exigent une instance Supabase locale et des comptes fictifs.
+- Syntaxe : `app.js`, `sw.js`, tous les fichiers `.mts` de Netlify et l'Edge Function TypeScript passent `node --experimental-strip-types --check` sous Node v26.13.0.
+- Les nouveaux tests couvrent configuration absente/invalide, refus d'une cible production en preview, refus de clé service-role côté navigateur, UID fondateur, absence d'identité de fondateur dans le corps, ordre des migrations et grants de la fondation.
+- Inventaire des usages Supabase dans les sources : aucune URL/clé de production utilisée comme valeur par défaut; le navigateur ne contient ni clé `service_role`, ni clé `sb_secret_`. Une recherche retrouve uniquement les noms des variables serveur et les deux hôtes de CSP.
+- La migration a été comparée statiquement à la structure observée de production et aux références des deux migrations suivantes. Les tables/colonnes visées comprennent les références de programme utilisées par la migration de quota et les tables fondatrices Cassandre.
+
+### Limites et état des environnements
+
+- Le projet Supabase de test reste vierge. Aucune migration n'a été appliquée, aucun compte fictif n'a été créé, aucune Edge Function n'a été déployée. La production n'a fait l'objet que de lectures de schéma et de source; aucune ligne de données n'a été copiée.
+- Le test de migration est statique uniquement : Supabase CLI, `psql` et Deno ne sont pas installés dans cet environnement. La syntaxe SQL, les contraintes, RLS, RPC et migrations doivent encore être validées par PostgreSQL/Supabase local ou sur une branche test après snapshot.
+- `package.json` ne définit aucun script `build`; aucun build n'a donc été revendiqué ou exécuté. `netlify.toml` et les réglages de build restent manquants/inconnus.
+- La fondation est un schéma backend isolé pour dépendances Cassandre et parcours principaux repérés, pas une copie complète du schéma Repwise. Les autres tables/publications/RLS du produit et leurs fonctions de sécurité doivent être ajoutées depuis des définitions vérifiées avant de prétendre que toute l'application tourne sur le projet vierge.
+- La fonction `cassandre-brain` collecte actuellement quelques agrégats globaux destinés au propriétaire; elle n'est pas encore déployée ni appelée dans le projet test. L'authentification du fondateur est vérifiée statiquement et par test unitaire de source, pas par un appel Edge réel. Une limite de coût/quota pour ses appels IA reste à intégrer/tester.
+- Aucune variable serveur ni aucun secret n'a été créé/modifié. Pour un test ultérieur, il faudra configurer les valeurs du projet test pour `SUPABASE_URL`, `SUPABASE_PUBLISHABLE_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, l'UID fondateur `CASSANDRE_OWNER_USER_ID`, ainsi que les secrets IA nécessaires. Les variables Netlify de preview doivent cibler le projet test; les valeurs de production ne doivent pas être recopiées dans les previews.
+
+### Fichiers de cette phase
+
+- Modifiés : `app.js`, `index.html`, `_headers`, `sw.js`, `netlify/lib/billing.mts`, `netlify/lib/cassandre.mts`, fonctions Netlify de facturation/Cassandre, `tests/supabase-runtime-policy.test.mjs`, `CASSANDRE_HANDOFF.md`.
+- Ajoutés : `netlify/lib/supabase-runtime-policy.mjs`, `netlify/functions/repwise-runtime-config.mts`, `runtime-config.js`, `supabase/functions/cassandre-brain/index.ts`, `supabase/migrations/20261103000000_repwise_cassandre_foundation.sql`, `supabase/ROLLBACK_TEST_FOUNDATION.md`, `tests/cassandre-owner-guard.test.mjs`, `tests/foundation-migration.test.mjs`.
+- Les chemins du projet sont toujours non suivis par Git; aucun commit, push, PR, déploiement ou changement de configuration distante n'a été effectué.
+
+### Prochaine étape recommandée
+
+Installer/activer un environnement PostgreSQL local isolé et le Supabase CLI, puis exécuter dans cet environnement vierge la fondation, `20261104202211...`, puis `20261109091437...`. Corriger toute erreur SQL ou de privilège avant d'envisager leur application au projet de test hébergé. Après validation locale, créer un snapshot du projet test, appliquer ces trois migrations uniquement au projet test, créer des comptes fictifs et vérifier les RPC/RLS; ne pas déployer `cassandre-brain` avant d'avoir configuré ses secrets de test et vérifié l'UID fondateur par deux comptes distincts.
+
+## Décision de publication bêta — 10 novembre 2026
+
+- Contrôles critiques non satisfaits : les outils Supabase connectés refusent actuellement l'accès au projet de test, y compris aux lectures d'URL, de clés publiques, de tables et d'historique. Aucune migration ni Edge Function ne peut donc être vérifiée ou installée dans ce projet.
+- Le connecteur Netlify ne retourne aucune variable d'environnement de site pour `repwise-coaching`. Les variables de test nécessaires à l'application et aux fonctions ne sont donc pas confirmées/configurées. Les variables partagées d'équipe n'ont pas été inspectées.
+- Le dépôt GitHub `bltraining/Repwise` est accessible, mais la branche distante `feature/cassandre-whatsapp-agents` est absente. Localement, les fichiers de l'application et Cassandre restent non suivis; aucun commit n'a été créé ou envoyé.
+- `package.json` n'a aucun script et `netlify.toml` est absent. Aucun build Netlify confirmé ni Deploy Preview n'est disponible. Le site Netlify a un déploiement courant prêt, mais cela ne valide pas cette copie locale.
+- Scan local des fichiers Git pour les formats de secrets usuels : aucune correspondance trouvée; aucun fichier `.env` présent. `.env*` et `.netlify/` sont ignorés par Git.
+- Campagne de tests locale : 22 tests, 20 réussis, 0 échec, 2 intégrations quota ignorées car elles nécessitent Supabase local. Cela ne valide pas les appels Supabase réels, les permissions fondateur en Edge, ni le parcours UI en navigateur.
+- WhatsApp Meta demeure facultatif pour la bêta et est désactivé tant que le mode test Meta n'est pas configuré. Stripe doit également rester limité aux clés de test hors production.
+- Décision : ne pas pousser, créer de preview ni publier sur le domaine public tant que l'accès Supabase test, les secrets de test, une vérification SQL PostgreSQL et un Deploy Preview réussi ne sont pas disponibles. Aucun changement de production, commit, push, migration ou déploiement n'a été fait.
+
+Prochaine action indispensable du fondateur : rétablir l'accès en lecture au projet Supabase de test `ahcdiqmxlblitbbbqxzo` et autoriser/configurer ses secrets de test côté Netlify. Ensuite seulement, valider les migrations sur PostgreSQL isolé et reprendre la séquence de preview/publication.
+
+## Mise à disposition GitHub — 10 novembre 2026
+
+- Les 63 fichiers source/configuration/tests nécessaires sont commités localement sur `feature/cassandre-whatsapp-agents`; aucun fichier `.env` ou temporaire n'est inclus. Le push de cette branche est l'étape courante.
+- `main` reste inchangée. Aucun déploiement ni changement de base de données n'a été effectué.

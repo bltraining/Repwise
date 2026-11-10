@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="fr"><head><meta charset="utf-8"><link rel="manifest" href="/manifest.webmanifest"><meta name="theme-color" content="#2F231C"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Repwise"><link rel="apple-touch-icon" href="/icons/apple-touch-icon.png">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Repwise – Coaching sportif</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#2A201B;--card:#352A23;--ink:#F7EEE5;--mut:#B8A798;--pri:#FF8F55;--line:#4A3B31;--ok:#7BD9A0;--soft:#3A2D26;color-scheme:dark}
+
+:root[data-theme="dark"]{--bg:#1C1512;--card:#261D18;--ink:#F2E8DC;--mut:#A8978A;--pri:#D9784F;--line:#3A2E26;--ok:#8CAE87;--soft:#2F241D}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:radial-gradient(ellipse at 50% -10%,#33190C 0%,var(--bg) 60%) fixed,var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.45;-webkit-font-smoothing:antialiased}
+.wrap{max-width:460px;margin:0 auto;padding:20px 18px 48px}
+.nav{display:flex;gap:22px;border-bottom:1px solid var(--line);margin-bottom:24px}
+.nav button{border:0;background:none;color:var(--mut);font:600 14px inherit;padding:10px 0;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.nav button.on{color:var(--ink);border-color:var(--pri)}
+.lab{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--mut);font-weight:600;margin:28px 0 10px}
+h1{font:600 28px/1.15 system-ui,-apple-system,sans-serif;margin:0 0 4px;letter-spacing:-.01em}
+.sub{color:var(--mut);font-size:14px;margin:0}
+.panel{background:linear-gradient(180deg,#3A2D26,#30251F);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 12px 40px -22px rgba(255,138,76,.45)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:0}
+.kpis div{padding:0 12px;border-left:1px solid var(--line)}.kpis div:first-child{padding-left:0;border:0}
+.kpis b{display:block;font:600 22px ui-monospace,SFMono-Regular,Menlo,monospace;font-variant-numeric:tabular-nums}
+.kpis span{font-size:12px;color:var(--mut)}
+.prog{height:4px;background:var(--soft);border-radius:4px;margin-top:16px;overflow:hidden}.prog i{display:block;height:100%;width:62%;background:var(--pri)}
+.ex{border-bottom:1px solid var(--line);padding:14px 0}.ex:last-child{border:0}
+.ex .h{display:flex;justify-content:space-between;align-items:baseline}
+.ex .n{font-weight:600}.ex .m{font-size:13px;color:var(--mut);font-variant-numeric:tabular-nums}
+.sets{display:flex;gap:8px;margin-top:10px}
+.set{flex:1;border:1px solid var(--line);border-radius:9px;padding:8px 0;text-align:center;font-size:13px;color:var(--mut);cursor:pointer;background:none;font-family:inherit}
+.set.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.btn{width:100%;margin-top:18px;border:0;background:linear-gradient(135deg,#FF9A5C,#E5582B);color:#1A0E08;box-shadow:0 0 26px rgba(255,138,76,.35);font:700 15px inherit;padding:14px;border-radius:12px;cursor:pointer}
+.chart{display:block;width:100%;height:70px}
+.tag{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--pri);font-weight:700}
+.btns{display:flex;gap:8px;margin-top:14px}
+.btns button{flex:1;border-radius:10px;padding:11px;font:600 14px inherit;cursor:pointer}
+.ok{background:var(--ink);color:var(--bg);border:0}.no{background:none;color:var(--ink);border:1px solid var(--line)}
+
+.row{display:flex;justify-content:space-between;align-items:center;padding:12px 0;border-bottom:1px solid var(--line);font-size:14px}
+.row:last-child{border:0}.row span{color:var(--mut);font-size:13px}
+.mac{margin:10px 0}.mac .t{display:flex;justify-content:space-between;font-size:13px}.mac .t span{color:var(--mut);font-variant-numeric:tabular-nums}.mac .b{height:5px;background:var(--soft);border-radius:4px;margin-top:5px;overflow:hidden}.mac .b i{display:block;height:100%;background:var(--pri);border-radius:4px}
+.meal{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:14px}.meal span{color:var(--mut);font-size:12px;font-variant-numeric:tabular-nums;text-align:right}
+.add{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:12px}.add input{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px;font:14px inherit}.add input.w{grid-column:1/-1}.add button{grid-column:1/-1;border:1px solid var(--line);background:none;color:var(--ink);border-radius:9px;padding:10px;font:600 14px inherit;cursor:pointer}
+.iabox{border-left:3px solid var(--pri);padding:2px 0 2px 12px;margin-top:14px;font-size:14px}.iabox small{display:block;color:var(--mut);margin-top:6px;font-size:12px}
+.add select{width:100%;grid-column:1/-1;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:10px;font:14px inherit}
+.hy{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap;margin:16px 0 4px;min-height:80px}.bt{text-align:center;font-size:11px;color:var(--mut)}.bt span{display:block}.gl,.bt{cursor:pointer;-webkit-tap-highlight-color:transparent;padding:4px}.fuse{animation:fz .5s ease}@keyframes fz{0%{transform:scale(.5);opacity:0}100%{transform:scale(1);opacity:1}}
+.hy .gl,.hy .bt{appearance:none;-webkit-appearance:none;display:flex;flex:none;flex-direction:column;align-items:center;justify-content:flex-end;width:42px;height:48px;min-height:0;padding:0;border:0;border-radius:0;background:transparent;box-shadow:none;filter:none;color:var(--mut);font:11px system-ui,sans-serif;cursor:pointer;-webkit-tap-highlight-color:transparent}.hy .gl svg,.hy .bt svg{display:block;filter:none;box-shadow:none;pointer-events:none}.hy .gl:focus-visible,.hy .bt:focus-visible{outline:2px solid var(--pri);outline-offset:3px;border-radius:6px}.wh-controls{display:flex;align-items:center;justify-content:space-between;gap:8px}.wh-controls .seg{margin:0;gap:4px;flex:none}.wh-controls .set{min-height:40px;padding:7px 10px;font-size:12px}.wh-range{font-size:11px;color:var(--mut);margin-top:3px}.wh-chart{display:block;width:100%;height:auto;margin-top:8px;overflow:visible}.wh-tooltip{min-height:18px;margin-top:2px;font-size:12px;color:var(--mut);font-variant-numeric:tabular-nums}.wh-empty{padding:14px 2px 2px;text-align:center}.wh-empty p{font-size:13px;margin:4px 0}.wh-empty button{margin-top:8px}.wh-point{cursor:pointer}.wh-point:focus{outline:none}.wh-point:focus-visible{stroke:var(--ink);stroke-width:3}
+.gr2,.gr3{display:grid;gap:8px;margin-bottom:8px}.gr2{grid-template-columns:1fr 1fr}.gr3{grid-template-columns:repeat(3,1fr)}
+label{font-size:11px;color:var(--mut);letter-spacing:.06em;text-transform:uppercase}label input{width:100%;margin-top:4px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px;font:14px inherit}input:disabled{opacity:.5}
+.seg{display:flex;gap:8px;margin-bottom:12px}.pie{display:flex;align-items:center;gap:16px;margin:14px 0}
+.locked{min-height:300px;position:relative;overflow:hidden}.lock{display:none}.locked #premc{filter:blur(7px);opacity:.5;pointer-events:none;user-select:none}
+.locked .lock{display:flex;position:absolute;inset:0;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:18px;gap:6px;background:linear-gradient(180deg,rgba(42,32,27,.3),rgba(42,32,27,.85))}
+.view{display:none}.view.on{display:block}
+.msg{color:var(--ok);font-weight:600;font-size:14px}
+.nav{gap:16px;overflow-x:auto;white-space:nowrap}.nav button{font-size:13px;flex:none}
+.car{display:flex;gap:10px;overflow-x:auto;scroll-snap-type:x mandatory;margin:0 -18px;padding:0 18px 6px}
+.gz{flex:0 0 104px;scroll-snap-align:start;background:linear-gradient(180deg,#3A2D26,#30251F);border:1px solid var(--line);border-radius:14px;padding:12px 4px;text-align:center}.gz svg{width:88px;height:51px}.gz small.rdy{color:var(--mut)}.gz b{display:block;font-size:13px}.gz small{color:var(--mut);font-size:12px}
+.sw{width:46px;height:28px;border-radius:14px;background:var(--line);border:0;position:relative;flex:none;cursor:pointer}.sw::after{content:"";position:absolute;top:3px;left:3px;width:22px;height:22px;border-radius:50%;background:#fff;transition:left .15s}.sw.on{background:var(--ok)}.sw.on::after{left:21px}
+.lg{display:flex;gap:14px;font-size:13px;color:var(--mut);margin:10px 0 0}.lg i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+svg text{font-family:system-ui,sans-serif}
+textarea#cassandreMessage{width:100%;margin-top:6px;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:10px;padding:12px;font:14px system-ui,sans-serif;resize:vertical;min-height:92px}
+.cass-agent{display:grid;grid-template-columns:1fr auto;gap:4px 12px;padding:11px 0;border-bottom:1px solid var(--line)}.cass-agent:last-child{border:0}.cass-agent span,.cass-meta{color:var(--mut);font-size:12px}.cass-card{padding:12px 0;border-bottom:1px solid var(--line)}.cass-card:last-child{border:0}.cass-result{white-space:pre-wrap;font-size:13px;margin-top:7px}.cass-pill{font-size:11px;color:var(--pri)}
+@media(min-width:720px){.wrap:has(#x.on){max-width:960px}.wrap:has(#x.on) #cassandreAgents{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));column-gap:22px}}
+.ov{display:none;position:fixed;inset:0;z-index:50;overflow:auto;background:var(--bg);padding-top:env(safe-area-inset-top,0px)}.ov.on{display:block}
+.sr,.sh{display:grid;grid-template-columns:26px 1fr 1fr 44px;gap:8px;align-items:center;margin-top:8px}.sh{font-size:11px;color:var(--mut);text-align:center;margin-top:12px}
+.sr .sn{color:var(--mut);font-size:13px;text-align:center}.sr input,#qn{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px;font-size:14px;font-family:inherit;text-align:center}#qn{text-align:left}
+.sr .ck{flex:none;padding:8px 0}
+.q{font-weight:600;font-size:14px;margin:18px 0 8px}.chs{display:flex;flex-wrap:wrap;gap:8px}.chs .set{flex:1 1 auto;padding:9px 12px}
+.locked #qc{filter:blur(7px);opacity:.5;pointer-events:none;user-select:none}
+#cn{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px;font-size:14px;font-family:inherit;margin-bottom:8px}
+.rm{border:0;background:none;color:var(--pri);font-size:13px;font-family:inherit;cursor:pointer;padding:0 0 0 4px}
+.ses{width:100%;background:none;border:0;border-bottom:1px solid var(--line);color:inherit;font-family:inherit;text-align:left;cursor:pointer}
+.cp{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px}.cp .set{flex:1 1 auto;padding:8px 10px;font-size:13px}
+#prem.locked{min-height:0}#prem.locked #premc{display:none}
+#prem.locked .lock{position:static;background:none;padding:2px 0;gap:4px}#prem.locked .btn{margin-top:4px;padding:10px;font-size:14px}
+details summary{list-style:none}details summary::-webkit-details-marker{display:none}details summary::after{content:" ＋";color:var(--pri)}details[open] summary::after{content:" −"}
+button,input,select,summary{min-height:44px}
+.sw{min-height:0;width:54px;height:40px;border-radius:20px}.sw::after{width:32px;height:32px;top:4px;left:4px}.sw.on::after{left:18px}
+.nav button{padding:14px 4px;min-width:48px}.lab,.tag,label,.sh,.bt{font-size:12px}details summary{padding:6px 0}
+
+.bar{display:flex;justify-content:space-between;align-items:center;margin:0 0 6px}.logo{font-size:18px;letter-spacing:-.3px}
+.av{flex:none;width:44px;height:44px;border-radius:50%;border:0;background:var(--pri);color:#2A1A10;font-weight:700;font-size:15px;font-family:inherit;padding:0;cursor:pointer}
+.av.big{width:64px;height:64px;font-size:22px;display:flex;align-items:center;justify-content:center;min-height:0}
+.tx{width:100%;border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:9px;padding:9px;font-size:14px;font-family:inherit;margin-bottom:8px}
+.sa{display:flex;gap:8px;margin-top:6px}.sa .rm{flex:1;border:1px dashed var(--line);border-radius:10px;color:var(--mut);font-size:13px}
+.rest{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(14px + env(safe-area-inset-bottom,0px));z-index:40;display:flex;align-items:center;gap:6px;background:#3A2D26;border:1px solid var(--pri);border-radius:28px;padding:4px 6px 4px 16px;box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.rest[hidden]{display:none}.rest b{font-variant-numeric:tabular-nums;white-space:nowrap}.rest button{border:0;background:var(--pri);color:#2A1A10;border-radius:20px;padding:0 14px;font-weight:700;font-family:inherit;white-space:nowrap}
+body.rt .wrap{padding-bottom:96px}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;z-index:70;background:#3A2D26;border:1px solid var(--line);border-radius:14px;padding:10px 16px;font-size:14px;max-width:90%;text-align:center}.toast[hidden]{display:none}#lcgw[hidden]{display:none!important}
+</style></head><body><div class="wrap">
+<div class="bar"><b class="logo">Repwise</b><button class="av" id="av" aria-label="Mon compte">AM</button></div>
+<div class="nav"><button class="on" data-v="c">Entraînement</button><button data-v="h">Historique</button><button data-v="n">Nutrition</button><button data-v="k">Coach</button><button data-v="x" id="cassandreNav" hidden>Cassandre</button></div>
+
+<div id="c" class="view on">
+<h1 id="hi">Bonjour, Alex</h1><p class="sub">Semaine 4 · Programme Force</p>
+<div class="lab">Progression</div>
+<div class="panel">
+<div class="kpis"><div><b>74,2</b><span>kg actuel</span></div><div><b>−3,1</b><span>depuis le début</span></div><div><b>69</b><span>kg objectif</span></div></div>
+<div class="prog"></div>
+<svg class="chart" viewBox="0 0 300 70" preserveAspectRatio="none" style="margin-top:14px"><polyline fill="none" stroke="var(--pri)" stroke-width="2" points="0,12 50,20 100,26 150,34 200,38 250,46 300,52"/></svg>
+</div>
+<div class="lab">Récupération musculaire</div><div class="car" id="rec"></div><div class="sub" style="font-size:12px">100 % = muscle reposé. Après une séance, la jauge baisse selon le volume travaillé et remonte pendant le repos. Fais défiler pour voir tous les muscles.</div>
+<div class="lab">Séance du jour · Haut du corps</div>
+<div class="panel" id="ex"></div>
+<button class="btn" id="fin">Terminer la séance</button>
+<div class="lab">Mes séances · gratuit, sans abonnement</div>
+<div class="panel" id="cs"><div id="cform"><p class="sub" style="margin:0 0 10px">Crée ta propre séance et note tes reps en direct. Rien à voir avec l’IA : cette partie reste gratuite.</p>
+<input id="cn" placeholder="Nom de la séance (ex. Jambes du lundi)" maxlength="40">
+<div class="add" style="margin-top:0"><select id="cgrp" class="w" aria-label="Choisir un exercice dans la liste" style="grid-column:span 3"><option value="">Choisir dans la liste…</option></select><input id="ce" class="w" list="dl" placeholder="Exercice : choisis ou écris le tien" maxlength="50"><datalist id="dl"></datalist><input id="cm" type="number" inputmode="numeric" min="1" max="8" value="3" aria-label="Nombre de séries"><button id="ca" style="grid-column:span 3">Ajouter l’exercice</button></div>
+<div id="clist"></div><div id="cerr" style="color:var(--pri);font-size:13px;margin-top:6px"></div>
+<button class="btn" id="cgo">Démarrer ma séance</button></div>
+<div id="clive" hidden><div class="h" style="display:flex;justify-content:space-between;align-items:baseline"><b id="ctitle"></b><button class="rm" id="cedit">Modifier</button></div><div id="cex"></div><button class="btn" id="cfin">Terminer ma séance</button></div></div>
+<div class="lab">Coaching IA personnalisé · Premium</div>
+<div class="panel locked" id="prem"><div id="premc"><div class="tag">Proposition de l'IA</div><div style="font:600 18px system-ui,sans-serif;margin:6px 0">Programme Force · v2</div>
+<div class="row">Développé couché<span>4 × 8-10 · 62,5 kg</span></div><div class="row">Rowing barre<span>4 × 8-10 · 52,5 kg</span></div><div class="row">Développé militaire<span>3 × 10 · 32,5 kg</span></div>
+<p class="sub" style="margin-top:10px">Adapté à ta progression et validé par ton coach avant d'apparaître ici.</p><details style="margin-top:14px;border-top:1px solid var(--line);padding-top:12px"><summary style="cursor:pointer;font-weight:600;font-size:14px">Bilan de fin de programme · questions de l’IA</summary><div id="qc"><div class="tag">Questions de l’IA · Premium</div>
+<p class="sub" style="margin:6px 0 0">Ton programme change toutes les 4 semaines. Réponds pour que l’IA prépare le suivant : ton coach le valide avant qu’il apparaisse.</p>
+<div class="q">Combien de séances peux-tu faire par semaine ?</div><div class="chs" data-q="s"><button class="set">2</button><button class="set">3</button><button class="set">4</button><button class="set">5</button><button class="set">6</button></div>
+<div class="q">Quel est ton objectif principal ?</div><div class="chs" data-q="o"><button class="set">Force</button><button class="set">Prise de muscle</button><button class="set">Perte de poids</button><button class="set">Endurance</button></div>
+<div class="q">Quels muscles veux-tu travailler en plus ?</div><div class="chs" data-q="m" data-multi="1"><button class="set">Pectoraux</button><button class="set">Dos</button><button class="set">Épaules</button><button class="set">Bras</button><button class="set">Abdos</button><button class="set">Jambes</button><button class="set">Fessiers</button></div>
+<div class="q">Une gêne, une blessure ou du matériel en moins ?</div><input id="qn" placeholder="Facultatif" maxlength="120">
+<div id="qerr" style="color:var(--pri);font-size:13px;margin-top:8px"></div>
+<button class="btn" id="qs" style="margin-top:12px">Envoyer mes réponses à l’IA</button></div></details></div>
+<div class="lock"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--pri)" stroke-width="1.8" stroke-linecap="round"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg><div style="font-weight:700;font-size:16px">Programme personnalisé par l'IA</div><div style="font:700 20px ui-monospace,monospace;margin-top:4px">5 € <span style="font-size:13px;color:var(--mut)">/ mois</span></div><div class="sub" style="font-size:12px">Sans engagement, résiliable à tout moment · paiement sécurisé par Stripe</div><label style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:12px;margin-top:6px"><input type="checkbox" id="cgv" style="width:auto;min-height:0;margin:0"> <span>J’accepte les <a href="/cgv" target="_blank" rel="noopener" style="color:var(--pri)">CGV</a> et demande l’accès immédiat au service (je renonce au délai de rétractation)</span></label><button class="btn" id="sub" style="margin-top:8px">Débloquer pour 5 € / mois</button></div></div>
+
+</div>
+<div id="n" class="view"><h1>Nutrition</h1><p class="sub">Choisis un aliment et sa quantité : il s’ajoute à ta journée.</p><div class="lab">Hydratation</div>
+<div class="panel"><div class="kpis" style="grid-template-columns:1fr 1fr"><div><b id="hl">0,0 L</b><span>bu aujourd'hui</span></div><div><b>2,5 L</b><span>objectif</span></div></div>
+<div id="hy" class="hy"></div>
+<div style="font-size:12px;color:var(--mut);margin-top:8px">Touche un verre pour l'ajouter, touche-le à nouveau pour l'enlever. 4 verres = 1 L.</div></div>
+<div class="lab">Historique du poids</div>
+<div class="panel">
+<div class="wh-controls"><div><div id="whRange" class="wh-range">Chargement des mesures…</div></div><div class="seg" id="whSeg" role="group" aria-label="Période de l’historique du poids"><button type="button" class="set" data-wp="jour" aria-pressed="false">Jour</button><button type="button" class="set on" data-wp="semaine" aria-pressed="true">Semaine</button><button type="button" class="set" data-wp="annee" aria-pressed="false">Année</button></div></div>
+<div id="whEmpty" class="wh-empty" hidden><div id="whEmptyTitle" class="tag"></div><p id="whEmptyCopy" class="sub"></p><button type="button" class="rm" id="whAdd">Ajouter mon poids dans Entraînement →</button></div>
+<div id="whContent"><svg id="whChart" class="wh-chart" viewBox="0 0 340 132" role="group" aria-label="Évolution du poids"></svg><div id="whTooltip" class="wh-tooltip" role="status" aria-live="polite"></div></div>
+</div>
+<div class="lab">Alimentation · inclus</div>
+<div class="panel">
+<div class="seg"><button class="set on" id="ma">Auto · estimation</button><button class="set" id="mp">Personnalisé</button></div>
+<div class="gr2"><label>Taille (cm)<input id="gh" type="number" inputmode="numeric" value="178"></label><label>Poids (kg)<input id="gw" type="number" inputmode="decimal" value="74.2"></label></div>
+<div class="gr3"><label>Prot. g<input id="gp" type="number" inputmode="numeric"></label><label>Gluc. g<input id="gg" type="number" inputmode="numeric"></label><label>Lip. g<input id="gl" type="number" inputmode="numeric"></label></div>
+<div id="gnote" style="font-size:12px;color:var(--mut)"></div>
+<div class="pie"><div id="pie"></div><div id="pleg"></div></div>
+<div id="macs"></div>
+<div id="meals" style="margin-top:10px"></div>
+<div class="add"><select id="fs"><option value="">Choisir un aliment</option></select><input id="fg2" type="number" inputmode="numeric" placeholder="Grammes" value="100" min="1" max="2000" aria-label="Quantité en grammes"><button id="fa" style="grid-column:span 3">Ajouter</button><div id="fprev" style="grid-column:1/-1;font-size:13px;color:var(--mut)"></div></div>
+<div style="font-size:12px;color:var(--mut);margin-top:8px">Valeurs approximatives, calculées pour la quantité saisie.</div>
+<div class="iabox"><div class="tag">Conseils du jour</div><div id="ianal" style="margin-top:4px"></div><small>Indications générales : ton coach garde le dernier mot.</small></div>
+</div>
+</div>
+
+<div id="h" class="view"><h1>Historique</h1><p class="sub">Ton évolution, séance après séance</p>
+<div class="lab">Période</div><div class="seg" id="hseg"></div>
+<div class="panel"><svg id="hchart" viewBox="0 0 340 145" width="100%"></svg><div id="hsum" class="sub" style="margin-top:6px"></div></div>
+<div class="lab">Séances · touche une séance pour la voir</div><div class="panel" id="hlist"></div></div>
+<div id="set" class="ov" style="z-index:55"><div class="wrap">
+<div style="display:flex;justify-content:space-between;align-items:center"><h1>Mon compte</h1><button class="rm" id="setx">Fermer</button></div>
+<div style="display:flex;align-items:center;gap:14px;margin:6px 0 4px"><div class="av big" id="avb">AM</div><div><b id="sn"></b><br><span class="sub" id="se"></span></div></div>
+<div class="lab">Profil</div><div class="panel"><div class="q" style="margin-top:6px">Nom affiché</div><input class="tx" id="un" maxlength="30" autocomplete="name"><div class="q" style="margin-top:0">E-mail</div><input class="tx" id="ue" type="email" maxlength="60" autocomplete="email" placeholder="ton@email.fr"><button class="btn" id="usv" style="margin-top:4px">Enregistrer</button></div>
+<div class="lab">Entraînement</div><div class="panel"><div class="q" style="margin-top:6px">Durée du repos entre les séries</div><div class="cp" id="urc"><button class="set" data-s="60">1 min</button><button class="set on" data-s="90">1 min 30</button><button class="set" data-s="120">2 min</button><button class="set" data-s="180">3 min</button></div>
+<div class="row" style="align-items:center"><span>Rappel de séance</span><button class="sw" id="urm" aria-label="Rappel de séance"></button></div></div>
+<div class="lab">Abonnement</div><div class="panel"><div class="row"><span>Formule</span><b id="uab"></b></div><button class="rm" id="uabb" style="margin:4px 0"></button><div id="uinf" class="sub" style="font-size:12px"></div><button class="rm" id="uport" hidden style="margin:4px 0">Gérer le paiement et les factures</button></div>
+<button class="btn" id="ulo" style="background:none;border:1px solid var(--line);color:var(--ink)">Se déconnecter</button>
+<button class="rm" id="uexp" style="margin-top:8px">Télécharger mes données</button><div class="sub" style="font-size:12px;margin-top:8px;display:flex;gap:14px;flex-wrap:wrap"><a href="/cgv" target="_blank" rel="noopener" style="color:var(--mut)">CGV</a><a href="/confidentialite" target="_blank" rel="noopener" style="color:var(--mut)">Confidentialité</a><a href="/mentions-legales" target="_blank" rel="noopener" style="color:var(--mut)">Mentions légales</a></div><br><button class="rm" id="udel" style="color:#E5584C;margin-top:8px">Supprimer mon compte</button><div id="delbox" class="panel" hidden style="margin-top:8px"><p class="sub" style="margin:0 0 8px">Suppression définitive. Entre ton mot de passe pour confirmer.</p><input class="tx" id="dpw" type="password" aria-label="Mot de passe" placeholder="Mot de passe" autocomplete="current-password"><div id="derr" role="alert" style="color:var(--pri);font-size:13px"></div><div class="btns"><button class="no" id="dno">Annuler</button><button class="no" id="dgo" style="color:#E5584C">Supprimer</button></div></div>
+</div></div>
+<div id="login" class="ov" style="z-index:60"><div class="wrap" style="padding-top:56px"><h1>Repwise</h1><p class="sub" id="lmsg">Connecte-toi pour retrouver tes séances.</p>
+<div class="panel"><input class="tx" id="ln" placeholder="Prénom et nom" autocomplete="name" hidden style="margin-top:8px"><input class="tx" id="le" type="email" placeholder="E-mail" autocomplete="username" style="margin-top:8px"><input class="tx" id="lp" type="password" placeholder="Mot de passe" autocomplete="current-password"><label id="lcgw" hidden style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-size:12px;margin-bottom:6px"><input type="checkbox" id="lcg" style="width:auto;min-height:0;margin:0"> <span>J’accepte les <a href="/cgv" target="_blank" rel="noopener" style="color:var(--pri)">conditions d’utilisation</a> et la <a href="/confidentialite" target="_blank" rel="noopener" style="color:var(--pri)">politique de confidentialité</a>, y compris le traitement de mes données de santé</span></label><div id="lerr" style="color:var(--pri);font-size:13px;margin-bottom:6px"></div><button class="btn" id="lgo">Se connecter</button><button class="rm" id="lsw" style="margin-top:8px;width:100%">Pas de compte ? Créer un compte</button><button class="rm" id="lfg" style="margin-top:4px;width:100%">Mot de passe oublié ?</button></div><div class="panel" id="lfp" hidden><div class="tag">Mot de passe oublié</div><p class="sub" style="margin:6px 0 4px">Entre l’e-mail de ton compte : tu recevras un lien pour choisir un nouveau mot de passe.</p><input class="tx" id="fpe" type="email" placeholder="E-mail" autocomplete="username" style="margin-top:8px"><div id="fpm" role="status" style="color:var(--pri);font-size:13px;margin-bottom:6px"></div><button class="btn" id="fps">Envoyer le lien</button><button class="rm" id="fpb" style="margin-top:8px;width:100%">Retour à la connexion</button></div></div></div><div id="rpw" class="ov" style="z-index:70"><div class="wrap" style="padding-top:56px"><h1>Nouveau mot de passe</h1><p class="sub">Choisis un nouveau mot de passe pour ton compte Repwise.</p><div class="panel"><input class="tx" id="rp1" type="password" placeholder="Nouveau mot de passe (8 caractères min.)" autocomplete="new-password" style="margin-top:8px"><input class="tx" id="rp2" type="password" placeholder="Confirme le mot de passe" autocomplete="new-password"><div id="rpm" role="status" style="color:var(--pri);font-size:13px;margin-bottom:6px"></div><button class="btn" id="rps">Enregistrer le mot de passe</button></div></div></div>
+<div id="off" hidden role="status" style="position:fixed;top:0;left:0;right:0;z-index:80;background:#E5584C;color:#fff;text-align:center;font-size:13px;padding:6px">Hors ligne : tes séances sont gardées et seront envoyées au retour du réseau.</div><div id="toast" class="toast" hidden role="status"></div>
+<div id="rest" class="rest" hidden role="timer"><b id="rtx"></b><button id="r15">+15 s</button><button id="rsk">Passer</button></div>
+<div id="sum" class="ov"><div class="wrap"><h1 id="stitle">Séance terminée</h1><p class="sub" id="ssub">Haut du corps · résumé</p>
+<div class="lab">Bilan</div><div class="panel"><div class="kpis" id="skp"></div></div>
+<div class="lab">Ressenti</div><div class="panel"><div class="cp" id="fbc" style="margin-top:8px"><button class="set" data-f="Facile">Facile</button><button class="set" data-f="Bien">Bien</button><button class="set" data-f="Dur">Dur</button><button class="set" data-f="Très dur">Très dur</button></div><input class="tx" id="fbn" placeholder="Un mot pour ton coach (facultatif)" maxlength="140" style="margin:0 0 6px"></div>
+<div id="sprog" hidden><div class="lab">Progression</div><div class="panel"><div class="cp" id="spc"></div><svg id="spg" viewBox="0 0 340 140" width="100%"></svg><div id="spn" class="sub" style="margin-top:4px"></div></div></div>
+<div class="lab">Détail des séries</div><div class="panel" id="sres"></div>
+<div class="btns" id="sact" hidden style="margin-top:10px"><button class="no" id="sedit">Corriger les séries</button><button class="no" id="sdel">Supprimer la séance</button></div>
+<div class="lab">Muscles travaillés</div><div class="panel"><svg id="mmap" viewBox="0 0 250 225" width="100%"></svg><div class="lg"><span><i style="background:var(--pri)"></i>Principal</span><span><i style="background:rgba(255,143,85,.38)"></i>Secondaire</span></div><div id="mdet" style="margin-top:8px"></div></div>
+<button class="btn" id="sclose">Fermer le résumé</button></div></div>
+<div id="k" class="view">
+<h1>Espace coach</h1><p class="sub">1 programme à valider</p>
+<div class="lab">En attente</div>
+<div class="panel" id="prop">
+<div class="tag">Proposition de l'IA</div>
+<div style="font:600 18px system-ui,sans-serif;margin:6px 0">Programme Force – v2</div>
+<p class="sub">Séances régulières et charges en hausse sur 3 semaines, avec une bonne récupération déclarée.</p>
+<div class="btns"><button class="no" id="refuse">Refuser</button><button class="ok" id="valide">Valider</button></div>
+</div>
+<div class="lab">Suivi</div>
+<div class="panel"><div class="row">Alex M.<span>3 séances · cette semaine</span></div><div class="row">Camille R.<span>2 séances · cette semaine</span></div><div class="row">Julien D.<span>1 séance · cette semaine</span></div></div>
+<div class="lab">Accès offert · sans paiement</div>
+<div class="panel" id="acc"></div><div class="sub" style="font-size:12px;margin-top:6px">Seul ton compte coach voit ce réglage : un client ne peut pas se l’activer lui-même.</div>
+<div class="lab">Alimentation et hydratation · 7 jours</div>
+<div class="panel">
+<div class="row"><div>Alex M.<br><span>2 150 kcal · P 128 g · 2,1 L par jour</span></div><span style="color:var(--ok);font-weight:700;font-size:11px">SUR LA CIBLE</span></div>
+<div class="row"><div>Camille R.<br><span>1 780 kcal · P 96 g · 1,6 L par jour</span></div><span style="color:var(--pri);font-weight:700;font-size:11px">PROTÉINES BASSES</span></div>
+<div class="row"><div>Julien D.<br><span>Aucun repas saisi cette semaine</span></div><span style="font-size:11px">OPTIONNEL</span></div>
+</div>
+</div>
+<div id="x" class="view">
+<h1>Cassandre</h1><p class="sub">Direction et suivi des missions Repwise</p>
+<div class="lab">État des agents</div><div class="panel" id="cassandreAgents"><p class="sub">Chargement…</p></div>
+<div class="lab">Centre de commandement</div><div class="panel">
+<label for="cassandreMessage">Ta demande</label><textarea id="cassandreMessage" rows="3" maxlength="2000" placeholder="Ex. : Analyse les programmes en attente et signale les anomalies."></textarea>
+<button class="btn" id="cassandreSend" type="button">Confier la mission à Cassandre</button><p class="sub" id="cassandreFeedback" role="status" style="margin-top:8px"></p>
+</div>
+<div class="lab">Missions et résultats</div><div class="panel" id="cassandreRequests"><p class="sub">Aucune mission chargée.</p></div>
+<div class="lab">Rapports de direction</div><div class="panel" id="cassandreReports"><p class="sub">Aucun rapport disponible.</p></div>
+<div class="panel" style="margin-top:8px"><label for="cassandreReportHour">Heure du rapport quotidien (heure de Paris)</label><div class="gr2" style="margin-top:6px"><input class="tx" id="cassandreReportHour" type="time" step="3600" value="18:00"><button class="set" id="cassandreReportToggle" type="button" aria-pressed="false">Rapport désactivé</button></div><button class="set" id="cassandreReportSave" type="button">Enregistrer l’horaire</button><p class="sub" id="cassandreReportFeedback" role="status" style="margin-top:8px">L’activation est bloquée sans configuration de test explicite.</p></div>
+<div class="lab">Validations du fondateur</div><div class="panel" id="cassandreApprovals"><p class="sub">Aucune validation en attente.</p></div>
+<div class="lab">WhatsApp (environnement de test)</div><div class="panel" id="cassandreWhatsapp"><p class="sub">La connexion officielle Meta sera affichée ici après configuration et vérification du numéro fondateur.</p>
+<p class="sub" style="margin-top:10px">Le numéro n’est activé qu’après réception et confirmation d’un code. L’envoi est verrouillé hors mode de test.</p>
+<label for="cassandrePhone">Numéro au format international</label><input class="tx" id="cassandrePhone" inputmode="tel" autocomplete="tel" placeholder="+33…">
+<button class="set" id="cassandrePhoneRequest" type="button">Envoyer le code WhatsApp (test)</button>
+<label for="cassandrePhoneCode" style="display:block;margin-top:12px">Code reçu</label><input class="tx" id="cassandrePhoneCode" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 chiffres">
+<button class="set" id="cassandrePhoneVerify" type="button">Vérifier et activer ce numéro</button><p class="sub" id="cassandrePhoneFeedback" role="status" style="margin-top:8px"></p></div>
+<div class="lab">Historique WhatsApp</div><div class="panel" id="cassandreWhatsAppHistory"><p class="sub">Aucun message disponible.</p></div>
+</div>
+</div>
+<div id="runtimeConfigFailure" role="alert" hidden style="position:fixed;z-index:9999;inset:1rem 1rem auto;padding:1rem;border-radius:12px;background:#7f1d1d;color:#fff">Repwise ne peut pas démarrer : la configuration Supabase de cet environnement est absente ou refusée.</div>
+<script src="/vendor/supabase-2.45.4.min.js"></script>
+<script src="/runtime-config.js" defer></script></body></html>
