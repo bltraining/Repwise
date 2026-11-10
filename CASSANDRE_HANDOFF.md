@@ -166,3 +166,11 @@ Prochaine action indispensable du fondateur : rétablir l'accès en lecture au p
 - Mode IA : aucun fournisseur IA n'est configuré sur le site ou l'équipe; worker désactivé par défaut et quota par défaut nul. Aucun appel IA payant n'a été effectué. Les fonctions financières refusent une clé Stripe live en Deploy Preview; aucune opération Stripe n'a été lancée.
 - Aucun navigateur automatisable n'est disponible dans cette session; aucun test visuel n'a été revendiqué. Aucun déploiement, preview, changement de données ou réglage distant n'a eu lieu. La publication reste bloquée par les variables test manquantes et la vérification visuelle.
 - Configuration et build commités sur `feature/cassandre-whatsapp-agents` (commit `e812180`) puis poussés sur `origin`; `main` n'a pas été modifiée.
+
+## Démo publique Repwise + Cassandre — 10 novembre 2026
+
+- Mode `build:demo` ajouté dans le commit `98bc40f`, poussé sur `feature/cassandre-whatsapp-agents`. Il ne publie que `index.html` et `_headers`; CSP sans scripts ni connexions externes. La page affiche uniquement des données fictives, les six agents et des actions administratives désactivées.
+- Site Netlify isolé `repwise-cassandre-demo` créé sur le plan gratuit, sans variable d'environnement ni liaison Git. Déploiement brouillon `6af2f25ea1cd7230fe732675` prêt à l'URL HTTPS : `https://6af2f25ea1cd7230fe732675--repwise-cassandre-demo.netlify.app/`.
+- Aucun backend/fonction n'a été envoyé (`available_functions=[]`); POST anonyme sur `/.netlify/functions/cassandre-command` renvoie 404. Les headers distants confirment CSP `connect-src none` et `script-src none`; la page répond HTTP 200, TLS validé, avec les libellés de démo, Cassandre et les six agents.
+- Protection SSO retirée uniquement sur le site de démonstration pour permettre sa consultation publique. Le site `repwise-coaching`, ses secrets, Supabase et le domaine de production n'ont pas été modifiés.
+- Aucun navigateur pilotable n'était disponible; validation faite par requêtes HTTPS et inspection du contenu, pas par test visuel interactif. La démo n'exécute pas les fonctions réelles : toute activation backend reste à préparer séparément.
