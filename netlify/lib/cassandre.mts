@@ -272,7 +272,7 @@ export async function processFounderMessage(ownerId: string, message: string, ch
     }
   }
 
-  const statusIntent = /(où en est|etat de|état de|tâches? en cours|missions? en cours|dernière mission|dernier résultat|résultat de la dernière)/i.test(text)
+  const statusIntent = /(où en (?:est|sont)|etat de|état de|tâches? en cours|missions? en cours|dernière mission|dernier résultat|résultat de la dernière)/i.test(text)
   const cancelIntent = /\b(annule|annuler|annulation)\b/i.test(text)
   if (statusIntent || cancelIntent) {
     let response: string
