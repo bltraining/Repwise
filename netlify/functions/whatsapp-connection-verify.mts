@@ -6,6 +6,7 @@ import { getEnv, handleError, json } from '../lib/billing.mts'
 export default async (req: Request) => {
   try {
     const user = await requireFounder(req)
+    if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return json({ error: 'WhatsApp est désactivé dans cette bêta.' }, 403)
     const pepper = getEnv('WHATSAPP_CHALLENGE_PEPPER')
     if (getEnv('CASSANDRE_WHATSAPP_TEST_MODE') !== 'true' || !pepper) return json({ error: 'Vérification WhatsApp désactivée.' }, 503)
     const body = await req.json().catch(() => ({})) as { code?: unknown }

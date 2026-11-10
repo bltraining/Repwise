@@ -5,6 +5,7 @@ import { getEnv, handleError, json } from '../lib/billing.mts'
 export default async (req: Request) => {
   try {
     const user = await requireFounder(req)
+    if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return json({ error: 'Les réglages Cassandre sont désactivés en mode consultation.' }, 403)
     const body = await req.json().catch(() => ({})) as { daily_report?: { enabled?: unknown; hour?: unknown } }
     const enabled = body.daily_report?.enabled
     const hour = body.daily_report?.hour

@@ -30,6 +30,16 @@ test('the primary Netlify host accepts only explicit public configuration', () =
   assert.equal(resolveSupabaseRuntimeConfig({ requestHost: primary, context: undefined, url: 'https://explicit-prod.supabase.co', publishableKey: anon }), null)
 })
 
+test('the isolated Cassandre beta host cannot receive a production Supabase config', () => {
+  const config = resolveSupabaseRuntimeConfig({
+    requestHost: 'repwise-cassandre-beta.netlify.app',
+    context: 'production',
+    url: 'https://explicit-prod.supabase.co',
+    publishableKey: anon,
+  })
+  assert.equal(config, null)
+})
+
 test('the browser receives only the public Supabase config and has no service-role key', async () => {
   const [app, html, runtime] = await Promise.all([
     readFile(new URL('../app.js', import.meta.url), 'utf8'),

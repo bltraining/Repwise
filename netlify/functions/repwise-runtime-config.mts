@@ -11,7 +11,7 @@ export default async (req: Request) => {
     context: getEnv('CONTEXT'),
   })
   if (!runtime) return json({ error: 'Configuration Supabase absente ou interdite pour cet environnement.' }, 503)
-  return json(runtime)
+  return json({ ...runtime, cassandreReadOnly: getEnv('CASSANDRE_READ_ONLY_MODE') === 'true' })
 }
 
 export const config: Config = { path: '/.netlify/functions/repwise-runtime-config', method: 'GET' }

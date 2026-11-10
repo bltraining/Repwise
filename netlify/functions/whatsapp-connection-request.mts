@@ -7,6 +7,7 @@ import { normalizePhone, sendWhatsAppTemplate } from '../lib/whatsapp.mts'
 export default async (req: Request) => {
   try {
     const user = await requireFounder(req)
+    if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return json({ error: 'WhatsApp est désactivé dans cette bêta.' }, 403)
     if (getEnv('CASSANDRE_WHATSAPP_TEST_MODE') !== 'true') return json({ error: 'La vérification de numéro est disponible uniquement dans le mode de test Meta.' }, 503)
     const pepper = getEnv('WHATSAPP_CHALLENGE_PEPPER')
     if (!pepper) return json({ error: 'Service de vérification non configuré.' }, 503)

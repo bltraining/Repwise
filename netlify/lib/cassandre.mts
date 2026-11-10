@@ -274,6 +274,12 @@ export async function processFounderMessage(ownerId: string, message: string, ch
 
   const statusIntent = /(où en (?:est|sont)|etat de|état de|tâches? en cours|missions? en cours|dernière mission|dernier résultat|résultat de la dernière)/i.test(text)
   const cancelIntent = /\b(annule|annuler|annulation)\b/i.test(text)
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true' && !statusIntent) {
+    await audit(ownerId, 'cassandre_read_only_command_rejected', 'cassandre_command', 'read_only_beta', { channel }).catch(() => {
+      console.error('Cassandre read-only rejection audit failed', { event: 'read_only_command_rejected' })
+    })
+    throw new HttpError(403, 'Cette bêta autorise uniquement la consultation des missions.')
+  }
   if (statusIntent || cancelIntent) {
     let response: string
     if (statusIntent) {
