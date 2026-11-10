@@ -1,5 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk'
-import { adminHeaders, requireUser, SUPABASE } from '../lib/billing.mts'
+import { adminHeaders, getEnv, requireUser, SUPABASE } from '../lib/billing.mts'
 
 // Génère avec l'IA une proposition de programme (statut « en_attente ») que le coach valide ou refuse.
 // Déclenchée : après l'envoi du questionnaire par le client, après un refus du coach, ou à la demande du coach.
@@ -19,6 +19,7 @@ async function q<T = any>(path: string, init: RequestInit = {}): Promise<T> {
 }
 
 export default async (req: Request) => {
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return new Response(null, { status: 403 })
   try {
     const user = await requireUser(req)
     const body = (await req.json().catch(() => ({}))) as Body

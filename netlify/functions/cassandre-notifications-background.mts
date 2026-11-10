@@ -5,6 +5,7 @@ import { sendWhatsAppNotification } from '../lib/whatsapp.mts'
 
 export default async (req: Request) => {
   if (!internalTokenMatches(req)) return json({ error: 'Non autorisé' }, 401)
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return new Response(null, { status: 204 })
   try {
     const { request_id: requestId } = await req.json() as { request_id?: string }
     const ownerId = getEnv('CASSANDRE_OWNER_USER_ID')

@@ -102,6 +102,7 @@ function extractJson(text: string): unknown {
 }
 
 export async function askModel(prompt: string): Promise<{ value: unknown; inputChars: number; outputChars: number }> {
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') throw new HttpError(503, 'Les appels IA sont désactivés en mode consultation.')
   const inputTokens = Math.ceil(prompt.length / 4)
   const reservedTokens = inputTokens + 1600
   const usageDay = await reserveModelCall(reservedTokens)
@@ -262,24 +263,26 @@ export async function createCassandreRequest(ownerId: string, message: string, c
 export async function processFounderMessage(ownerId: string, message: string, channel: 'dashboard' | 'whatsapp', sourceMessageId?: string) {
   const text = message.trim().slice(0, 2000)
   if (!text) throw new HttpError(400, 'Écris une demande à Cassandre.')
-  if (sourceMessageId) {
-    const [existing] = await db<Array<{ id: string; status: string; summary: string | null }>>(
-      `cassandre_private/requests?select=id,status,summary&owner_user_id=eq.${encodeURIComponent(ownerId)}&source_message_id=eq.${encodeURIComponent(sourceMessageId)}&limit=1`,
-    )
-    if (existing) {
-      const tasks = await db<Array<{ id: string }>>(`cassandre_private/tasks?select=id&request_id=eq.${encodeURIComponent(existing.id)}&status=in.(pending,assigned,queued,needs_correction)&order=created_at`)
-      return { requestId: existing.id, taskIds: tasks.map(x => x.id), response: existing.summary || 'Mission déjà enregistrée; son état est consultable dans le tableau de bord.', duplicate: true }
-    }
-  }
-
   const statusIntent = /(où en (?:est|sont)|etat de|état de|tâches? en cours|missions? en cours|dernière mission|dernier résultat|résultat de la dernière)/i.test(text)
   const cancelIntent = /\b(annule|annuler|annulation)\b/i.test(text)
-  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true' && !statusIntent) {
+  const readOnly = getEnv('CASSANDRE_READ_ONLY_MODE') === 'true'
+  if (readOnly && !statusIntent) {
     await audit(ownerId, 'cassandre_read_only_command_rejected', 'cassandre_command', 'read_only_beta', { channel }).catch(() => {
       console.error('Cassandre read-only rejection audit failed', { event: 'read_only_command_rejected' })
     })
     throw new HttpError(403, 'Cette bêta autorise uniquement la consultation des missions.')
   }
+  if (sourceMessageId) {
+    const [existing] = await db<Array<{ id: string; status: string; summary: string | null }>>(
+      `cassandre_private/requests?select=id,status,summary&owner_user_id=eq.${encodeURIComponent(ownerId)}&source_message_id=eq.${encodeURIComponent(sourceMessageId)}&limit=1`,
+    )
+    if (existing) {
+      if (readOnly) return { requestId: existing.id, taskIds: [], response: existing.summary || 'Mode consultation : mission déjà enregistrée.', duplicate: true }
+      const tasks = await db<Array<{ id: string }>>(`cassandre_private/tasks?select=id&request_id=eq.${encodeURIComponent(existing.id)}&status=in.(pending,assigned,queued,needs_correction)&order=created_at`)
+      return { requestId: existing.id, taskIds: tasks.map(x => x.id), response: existing.summary || 'Mission déjà enregistrée; son état est consultable dans le tableau de bord.', duplicate: true }
+    }
+  }
+
   if (statusIntent || cancelIntent) {
     let response: string
     if (statusIntent) {
@@ -309,6 +312,7 @@ export async function processFounderMessage(ownerId: string, message: string, ch
 }
 
 export async function dispatchTask(reqUrl: string, taskId: string) {
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') throw new HttpError(403, 'Les workers sont désactivés en mode consultation.')
   const token = getEnv('CASSANDRE_INTERNAL_TOKEN')
   if (!token) throw new HttpError(503, 'Worker Cassandre non configuré.')
   const target = new URL('/.netlify/functions/cassandre-task-worker-background', reqUrl)

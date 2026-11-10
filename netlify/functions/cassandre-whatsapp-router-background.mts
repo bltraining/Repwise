@@ -5,6 +5,7 @@ import { sendWhatsAppNotification } from '../lib/whatsapp.mts'
 
 export default async (req: Request) => {
   if (!internalTokenMatches(req)) return json({ error: 'Non autorisé' }, 401)
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return new Response(null, { status: 204 })
   try {
     const { message_id: messageId } = await req.json() as { message_id?: string }
     if (!messageId || !/^[0-9a-f-]{36}$/i.test(messageId)) return json({ error: 'Message invalide' }, 400)

@@ -8,6 +8,7 @@ type HookMessage = { id?: string; from?: string; type?: string; text?: { body?: 
 type HookValue = { metadata?: { phone_number_id?: string }; messages?: HookMessage[]; statuses?: Array<{ id?: string; status?: string }> }
 
 export default async (req: Request) => {
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return new Response(null, { status: 204 })
   try { assertSupabaseTargetForRequest(req) } catch { return json({ error: 'Configuration de données absente ou interdite.' }, 503) }
   if (req.method === 'GET') {
     const url = new URL(req.url)

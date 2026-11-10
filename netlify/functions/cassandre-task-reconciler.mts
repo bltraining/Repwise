@@ -3,7 +3,7 @@ import { db, dispatchTask } from '../lib/cassandre.mts'
 import { assertSupabaseTargetForRequest, getEnv, handleError } from '../lib/billing.mts'
 
 export default async (req: Request) => {
-  if (getEnv('CASSANDRE_WORKER_ENABLED') !== 'true') return new Response(null, { status: 204 })
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true' || getEnv('CASSANDRE_WORKER_ENABLED') !== 'true') return new Response(null, { status: 204 })
   try {
     assertSupabaseTargetForRequest(req)
     const tasks = await db<Array<{ id: string; status: string; locked_at: string | null }>>(

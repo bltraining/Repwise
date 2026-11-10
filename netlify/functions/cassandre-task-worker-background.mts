@@ -17,6 +17,7 @@ async function synthesize(task: CassandreTask, workerId: string, requestUrl: str
 
 export default async (req: Request) => {
   if (!internalTokenMatches(req)) return json({ error: 'Non autorisé' }, 401)
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') return new Response(null, { status: 204 })
   let task: CassandreTask | null = null
   const workerId = newId()
   try {

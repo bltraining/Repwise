@@ -6,7 +6,7 @@ export default async (req: Request) => {
   try {
     assertSupabaseTargetForRequest(req)
     const ownerId = getEnv('CASSANDRE_OWNER_USER_ID')
-    if (!ownerId || getEnv('CASSANDRE_WORKER_ENABLED') !== 'true') return new Response(null, { status: 204 })
+    if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true' || !ownerId || getEnv('CASSANDRE_WORKER_ENABLED') !== 'true') return new Response(null, { status: 204 })
     const [setting] = await db<Array<{ setting_value: { enabled?: boolean; hour?: string; timezone?: string } }>>(
       'cassandre_private/settings?select=setting_value&setting_key=eq.daily_report&limit=1',
     )

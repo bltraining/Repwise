@@ -57,6 +57,7 @@ export function isPrimarySiteRequest(req: Request) {
 }
 
 export function getStripe(req: Request) {
+  if (getEnv('CASSANDRE_READ_ONLY_MODE') === 'true') throw new HttpError(503, 'Stripe est désactivé en mode consultation.')
   assertSupabaseTargetForRequest(req)
   const key = getEnv('STRIPE_SECRET_KEY')
   if (!key) throw new HttpError(503, 'Paiement non configuré')
