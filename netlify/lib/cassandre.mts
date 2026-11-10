@@ -1,5 +1,6 @@
 import { randomUUID, timingSafeEqual } from 'node:crypto'
 import { assertSupabaseTargetForRequest, getEnv, HttpError, adminHeaders, requireUser, getProfil, SUPABASE, type AuthUser } from './billing.mts'
+import { buildAuditWrite, buildPrivateRpcCall } from './cassandre-private-api.mjs'
 import { isConfiguredFounder } from './founder-policy.mjs'
 
 export const AGENTS = {
@@ -59,17 +60,14 @@ export function assertWorkerConfigured() {
 }
 
 export async function db<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const privateSchema = path.startsWith('cassandre_private/')
-  const resource = privateSchema ? path.slice('cassandre_private/'.length) : path
-  let url = `${SUPABASE.url}/rest/v1/${resource}`
+  const privateCall = buildPrivateRpcCall(path, init)
+  let url = `${SUPABASE.url}/rest/v1/${path}`
   let requestInit: RequestInit = { ...init, headers: { ...adminHeaders(), ...(init.headers as Record<string, string> || {}) } }
-  if (privateSchema) {
-    const parsed = new URL(`https://cassandre.internal/${resource}`)
-    const body = typeof init.body === 'string' ? JSON.parse(init.body) : init.body || null
-    url = `${SUPABASE.url}/rest/v1/rpc/cassandre_private_api`
+  if (privateCall) {
+    url = `${SUPABASE.url}/rest/v1/${privateCall.endpoint}`
     requestInit = {
       method: 'POST', headers: adminHeaders(),
-      body: JSON.stringify({ p_table: parsed.pathname.slice(1), p_method: (init.method || 'GET').toUpperCase(), p_params: Object.fromEntries(parsed.searchParams), p_body: body }),
+      body: JSON.stringify(privateCall.body),
     }
   }
   const response = await fetch(url, requestInit)
@@ -141,10 +139,8 @@ export async function askModel(prompt: string): Promise<{ value: unknown; inputC
 }
 
 export async function audit(actor: string, action: string, targetType: string, targetId: string, details: Record<string, unknown> = {}) {
-  await db('cassandre_private.audit_log', {
-    method: 'POST', headers: { 'Content-Profile': 'cassandre_private', Prefer: 'return=minimal' },
-    body: JSON.stringify({ actor, action, target_type: targetType, target_id: targetId, details }),
-  })
+  const write = buildAuditWrite(actor, action, targetType, targetId, details)
+  await db(write.path, write.init)
 }
 
 export function newId() { return randomUUID() }
@@ -195,7 +191,7 @@ export async function collectAgentFacts(agent: AgentKey, coachId: string) {
     return { ...base, repas_7j_extraits: rows.length, plans_nutrition: null,
       plans_nutrition_disponibles: false, limite: 'Le projet ne fournit pas de table de plans nutritionnels structurés.' }
   }
-  const tasks = await db<Array<{ status: string }>>('cassandre_private.tasks?select=status&limit=500')
+  const tasks = await db<Array<{ status: string }>>('cassandre_private/tasks?select=status&limit=500')
   return { incidents_systeme: null, tâches_cassandre_extraites: tasks.length,
     tâches_bloquees: tasks.filter(t => t.status === 'blocked').length,
     journaux_techniques_connectes: false, limite: 'Aucune source de journaux Netlify n’est connectée à cet agent.' }

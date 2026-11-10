@@ -174,3 +174,10 @@ Prochaine action indispensable du fondateur : rétablir l'accès en lecture au p
 - Aucun backend/fonction n'a été envoyé (`available_functions=[]`); POST anonyme sur `/.netlify/functions/cassandre-command` renvoie 404. Les headers distants confirment CSP `connect-src none` et `script-src none`; la page répond HTTP 200, TLS validé, avec les libellés de démo, Cassandre et les six agents.
 - Protection SSO retirée uniquement sur le site de démonstration pour permettre sa consultation publique. Le site `repwise-coaching`, ses secrets, Supabase et le domaine de production n'ont pas été modifiés.
 - Aucun navigateur pilotable n'était disponible; validation faite par requêtes HTTPS et inspection du contenu, pas par test visuel interactif. La démo n'exécute pas les fonctions réelles : toute activation backend reste à préparer séparément.
+
+## Correction du routage privé Cassandre — 10 novembre 2026
+
+- `audit` et l'agent Technique utilisent maintenant `cassandre_private/audit_log` et `cassandre_private/tasks`, routés par un adaptateur commun vers le RPC privé. Aucun appel privé en notation pointée ne reste dans les fonctions Netlify.
+- Test ciblé `tests/cassandre-audit-write.test.mjs` : 2 réussis; vérifie le payload d'écriture audit et l'adaptation de la lecture `tasks` au RPC.
+- Migration différentielle `20261110104855_cassandre_audit_rpc_permissions.sql` : exige le RPC existant, retire l'exécution à `public`/`anon`/`authenticated` et la réserve à `service_role`. Appliquée uniquement au Supabase local. Test SQL local : ACL confirmée, fausse ligne d'audit écrite puis supprimée.
+- Build `netlify build --offline --context deploy-preview` réussi; les 21 fonctions ont été empaquetées. Aucun déploiement, changement distant, paiement ou appel IA.
