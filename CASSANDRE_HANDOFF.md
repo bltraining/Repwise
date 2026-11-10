@@ -140,7 +140,28 @@ Installer/activer un environnement PostgreSQL local isolé et le Supabase CLI, p
 
 Prochaine action indispensable du fondateur : rétablir l'accès en lecture au projet Supabase de test `ahcdiqmxlblitbbbqxzo` et autoriser/configurer ses secrets de test côté Netlify. Ensuite seulement, valider les migrations sur PostgreSQL isolé et reprendre la séquence de preview/publication.
 
+## Vérifications Supabase locales — 10 novembre 2026
+
+- Supabase CLI `3.1.0` installé en dépendance de développement; `supabase/config.toml` initialisé sans remplacer les migrations. Docker Desktop et la pile locale sont opérationnels. Mailpit a été exclu car son port local était déjà occupé.
+- Trois migrations appliquées uniquement à Supabase local, dans l'ordre : `20261103000000`, `20261104202211`, `20261109091437`. Aucun ordre distant n'a été utilisé.
+- Contrôle SQL local : 0 table sans RLS dans `public`/`cassandre_private`, 0 privilège direct de table pour `anon`/`authenticated`, 6 agents enregistrés et 8 RPC Cassandre. Aucun compte ni donnée de production utilisé.
+- Tests d'intégration quota exécutés avec des comptes fictifs : 10 réservations acceptées puis la 11e refusée; 11 requêtes simultanées n'en ont réservé que 10. 2 réussis, 0 échec, 0 ignoré.
+- RPC de tâches testées localement avec une tâche fictive : réservation unique entre deux workers, reprise via `needs_correction`, tâche terminée non réclamée une seconde fois. La tâche et les comptes de test ont été supprimés.
+- `cassandre-brain` servi localement avec JWT vérifié : requête sans JWT = 401; UID fondateur fictif authentifié = 503 attendu faute de clé IA; coach non fondateur = 403; même coach avec identité de fondateur falsifiée dans le corps = 403. Les comptes et fichiers temporaires ont été supprimés; les traces de refus restent dans le journal d'audit local.
+- Build et navigateur non validés : `package.json` ne définit pas de scripts et `netlify.toml` est absent; aucune campagne navigateur n'a été exécutée. WhatsApp Meta et appels IA réels non testés.
+- L'installation npm locale a relevé 13 vulnérabilités (1 basse, 7 modérées, 5 élevées) et un script d'installation `esbuild` bloqué par la politique `allowScripts`. Aucun correctif automatique ni mise à niveau n'a été lancé.
+- Aucun déploiement, push, commit, migration distante, changement de production ou opération financière. Prochaine étape utile : définir la commande et le dossier de build Netlify, puis exécuter un parcours UI dans un navigateur avant toute preview.
+
 ## Mise à disposition GitHub — 10 novembre 2026
 
 - Les 63 fichiers source/configuration/tests nécessaires sont commités localement sur `feature/cassandre-whatsapp-agents`; aucun fichier `.env` ou temporaire n'est inclus. Le push de cette branche est l'étape courante.
 - `main` reste inchangée. Aucun déploiement ni changement de base de données n'a été effectué.
+
+## Préparation Netlify avant publication — 10 novembre 2026
+
+- Build configuré avec `npm run build`, sortie limitée à `dist` et fonctions dans `netlify/functions`; les fichiers source, tests, docs et migrations ne sont pas publiés. Les 21 fonctions ont été empaquetées par `netlify build --offline --context deploy-preview` avec succès.
+- `@netlify/functions` mis à jour vers 6.1.1 après vérification de l'export `Config` utilisé et de son exigence Node >=22.12. Le build cible Node 22.12.0. `npm audit` : 0 vulnérabilité (avant mise à jour : 13, dont 5 hautes dans les outils de développement/bundling).
+- Test ciblé `supabase-runtime-policy` : 4 réussis, y compris refus d'une URL de production en Deploy Preview et absence de clé service-role dans le navigateur.
+- Inventaire Netlify sans lecture des valeurs : deux variables de site, `STRIPE_SECRET_KEY` et `SUPABASE_SERVICE_ROLE_KEY`, présentes pour les contextes production et Deploy Preview; aucune variable partagée d'équipe. URL/clé publique Supabase, UID fondateur, jeton interne et configuration IA ne sont pas présentes dans cet inventaire. Les Deploy Previews resteront en échec fermé tant que leurs valeurs de test n'auront pas été configurées dans les scopes runtime/functions.
+- Mode IA : aucun fournisseur IA n'est configuré sur le site ou l'équipe; worker désactivé par défaut et quota par défaut nul. Aucun appel IA payant n'a été effectué. Les fonctions financières refusent une clé Stripe live en Deploy Preview; aucune opération Stripe n'a été lancée.
+- Aucun navigateur automatisable n'est disponible dans cette session; aucun test visuel n'a été revendiqué. Aucun déploiement, preview, changement de données ou réglage distant n'a eu lieu. La publication reste bloquée par les variables test manquantes et la vérification visuelle.

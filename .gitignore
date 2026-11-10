@@ -1,4 +1,6 @@
 .netlify/
+node_modules/
+dist/
 supabase/.temp/
 .env
 .env.*
