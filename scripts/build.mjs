@@ -8,6 +8,9 @@ const demoMode = process.argv.includes('--demo')
 const staticFiles = demoMode ? [
   'demo/index.html',
   'demo/_headers',
+  'demo/_routes.json',
+  'demo/cassandre-demo.js',
+  'vendor/supabase-2.45.4.min.js',
 ] : [
   '_headers',
   'app.js',
@@ -41,5 +44,5 @@ for (const file of staticFiles) {
 }
 
 console.log(demoMode
-  ? 'Demo build copied only its static page and restrictive headers; no app code, functions, or integrations are included.'
+  ? 'Demo build copied the isolated beta page and browser auth client; Cloudflare Pages Functions are sourced from /functions. No regular Repwise backend integrations are included.'
   : `Copied ${staticFiles.length} static inputs to dist; source/config files are excluded.`)
