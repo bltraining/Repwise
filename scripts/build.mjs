@@ -4,7 +4,11 @@ import { fileURLToPath } from 'node:url'
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const outputDir = resolve(projectRoot, 'dist')
-const staticFiles = [
+const demoMode = process.argv.includes('--demo')
+const staticFiles = demoMode ? [
+  'demo/index.html',
+  'demo/_headers',
+] : [
   '_headers',
   'app.js',
   'cgv.html',
@@ -32,7 +36,10 @@ if (missing.length) throw new Error(`Static build inputs missing: ${missing.join
 await rm(outputDir, { recursive: true, force: true })
 await mkdir(outputDir, { recursive: true })
 for (const file of staticFiles) {
-  await cp(join(projectRoot, file), join(outputDir, file), { recursive: true })
+  const outputName = demoMode ? file.replace(/^demo\//, '') : file
+  await cp(join(projectRoot, file), join(outputDir, outputName), { recursive: true })
 }
 
-console.log(`Copied ${staticFiles.length} static inputs to dist; source/config files are excluded.`)
+console.log(demoMode
+  ? 'Demo build copied only its static page and restrictive headers; no app code, functions, or integrations are included.'
+  : `Copied ${staticFiles.length} static inputs to dist; source/config files are excluded.`)
