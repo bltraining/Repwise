@@ -385,11 +385,11 @@ Prochaine action indispensable du fondateur : rétablir l'accès en lecture au p
 
 ## Invitation du compte fondateur de test — 2026-11-11
 
-- L'invitation Supabase Auth a répondu avec succès pour l'adresse confirmée par le fondateur. Le projet `qlwlyectatosrelqynkz` contient un seul utilisateur invité, encore non confirmé; aucune donnée métier ni aucun compte de production n'a été utilisé.
+- L'invitation Supabase Auth a répondu avec succès pour l'adresse confirmée par le fondateur. Vérification après retour utilisateur : un utilisateur invité est confirmé et son unique profil `public.profils` a `role='coach'`; aucune donnée métier ni aucun compte de production n'a été utilisé.
 - L'UID retourné par Supabase est stocké uniquement dans le secret `CASSANDRE_OWNER_USER_ID` du Worker de test. Secrets Cloudflare présents : `CASSANDRE_OWNER_USER_ID`, `SUPABASE_PUBLISHABLE_KEY` et `SUPABASE_SERVICE_ROLE_KEY`; aucune valeur n'est enregistrée dans Git.
 - Le Worker `repwise-founder-test` reste en lecture seule, URL Supabase test figée; dernière version vérifiée `8cc323ac-ee53-4dc5-9571-5ebbebcd9a09`. Worker principal inchangé.
 - `cloudflare/worker.js` vérifie le JWT, l'UID propriétaire et la confirmation d'email avant finalisation. Si le profil manque, il crée `public.profils.role='coach'` uniquement pour cet UID; un profil existant non-coach est refusé. Le fondateur choisit son mot de passe dans le navigateur.
 - `cloudflare/static/founder-access.js` retire immédiatement les tokens d'invitation de la barre d'adresse puis les échange en requête same-origin. La session utilise des cookies `Secure; HttpOnly; SameSite=Strict`.
 - L'endpoint temporaire d'envoi a été retiré et son secret éphémère supprimé; `/api/bootstrap-founder-invite` répond 404. Le panneau anonyme répond 401.
-- Tests ciblés : 13/13 réussis; syntaxe JavaScript et `git diff --check` réussis; build Cloudflare réussi. Le navigateur CUA n'était pas disponible; l'acceptation et le login mobile ne sont pas encore testés.
-- Action du fondateur : ouvrir le courriel d'invitation, choisir un mot de passe d'au moins 12 caractères et se connecter sur `https://repwise-founder-test.repwise-coaching.workers.dev`. Ne jamais envoyer le mot de passe dans le chat. Après acceptation, vérifier le rôle coach, le tableau, la déconnexion et le parcours mobile.
+- Tests ciblés : 13/13 réussis; syntaxe JavaScript et `git diff --check` réussis; build Cloudflare réussi. Worker HTTPS 200, panneau anonyme 401. Le navigateur CUA n'était pas disponible; la connexion mobile reste à vérifier.
+- Le fondateur signale que le lien ne fonctionne pas. Le Worker est accessible; préciser si le problème concerne le lien du courriel ou l'URL du Worker et demander le texte/capture de l'erreur sans URL contenant des tokens. Ne jamais demander le mot de passe.
