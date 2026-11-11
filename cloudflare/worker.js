@@ -146,6 +146,39 @@ async function founderCoachProfile(env, userId) {
   }
 }
 
+async function ensureFounderCoachProfile(env, userId) {
+  if (typeof env.SUPABASE_SERVICE_ROLE_KEY !== 'string' || !env.SUPABASE_SERVICE_ROLE_KEY) return { unavailable: true }
+  const base = `${TEST_SUPABASE_URL}/rest/v1/profils`
+  const headers = {
+    apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+    Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+    'Accept-Profile': 'public',
+    'Content-Profile': 'public',
+  }
+  try {
+    const query = new URLSearchParams({ id: `eq.${userId}`, select: 'id,role', limit: '1' })
+    const current = await fetch(`${base}?${query}`, { headers: { ...headers, 'Accept-Profile': 'public' } })
+    if (!current.ok) return { unavailable: true }
+    const profiles = await current.json()
+    if (Array.isArray(profiles) && profiles.length) {
+      return { isCoach: profiles.some(profile => profile.id === userId && profile.role === 'coach') }
+    }
+
+    const created = await fetch(base, {
+      method: 'POST',
+      headers: { ...headers, 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify({ id: userId, role: 'coach' }),
+    })
+    if (!created.ok && created.status !== 409) return { unavailable: true }
+    const verify = await fetch(`${base}?${query}`, { headers: { ...headers, 'Accept-Profile': 'public' } })
+    if (!verify.ok) return { unavailable: true }
+    const confirmed = await verify.json()
+    return { isCoach: Array.isArray(confirmed) && confirmed.some(profile => profile.id === userId && profile.role === 'coach') }
+  } catch {
+    return { unavailable: true }
+  }
+}
+
 async function ownerSession(request, env) {
   if (!sameOrigin(request)) return { response: error('request_refused', 403) }
   if (!configured(env)) return { response: error('service_unavailable', 503) }
@@ -299,6 +332,50 @@ async function logoutSession(request, env) {
   return json({ ok: true }, 200, clearCookies())
 }
 
+async function completeFounderInvite(request, env) {
+  if (!sameOrigin(request)) return error('request_refused', 403)
+  if (!configured(env)) return error('service_unavailable', 503)
+
+  const body = await readJson(request)
+  if (!body || typeof body.access_token !== 'string' || body.access_token.length > 4096
+    || typeof body.refresh_token !== 'string' || body.refresh_token.length > 4096
+    || typeof body.password !== 'string' || body.password.length < 12 || body.password.length > 128) {
+    return error('invalid_request', 400)
+  }
+
+  const checked = await verifyAccessToken(env, body.access_token)
+  if (checked.unavailable) return error('service_unavailable', 503)
+  if (!checked.user) return error('authentication_required', 401)
+  if (checked.user.id !== env.CASSANDRE_OWNER_USER_ID) {
+    await writeAudit(env, checked.user.id, 'founder_invite_refused', 'invite', 'owner-setup')
+    return error('access_denied', 403)
+  }
+  if (!checked.user.email_confirmed_at && !checked.user.confirmed_at) return error('email_confirmation_required', 403)
+
+  const profile = await ensureFounderCoachProfile(env, checked.user.id)
+  if (profile.unavailable) return error('service_unavailable', 503)
+  if (!profile.isCoach) {
+    await writeAudit(env, checked.user.id, 'founder_profile_denied', 'profile', 'coach-role-required')
+    return error('access_denied', 403)
+  }
+
+  const changed = await fetch(`${TEST_SUPABASE_URL}/auth/v1/user`, {
+    method: 'PUT',
+    headers: { ...authHeaders(env, body.access_token), 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password: body.password }),
+  })
+  if (changed.status === 400 || changed.status === 422) return error('password_rejected', 400)
+  if (changed.status === 401 || changed.status === 403) return error('authentication_required', 401)
+  if (!changed.ok) return error('service_unavailable', 503)
+
+  await writeAudit(env, checked.user.id, 'founder_invite_completed', 'session', 'owner-setup')
+  return json({ ok: true }, 200, sessionCookies({
+    access_token: body.access_token,
+    refresh_token: body.refresh_token,
+    expires_in: 3600,
+  }))
+}
+
 export default {
   async fetch(request, env = {}) {
     const { pathname } = new URL(request.url)
@@ -314,6 +391,10 @@ export default {
     if (pathname === '/api/founder-panel') {
       if (request.method !== 'GET') return error('not_found', 404)
       try { return await founderPanel(request, env) } catch { return error('service_unavailable', 503) }
+    }
+    if (pathname === '/api/complete-founder-invite') {
+      if (request.method !== 'POST') return error('not_found', 404)
+      try { return await completeFounderInvite(request, env) } catch { return error('service_unavailable', 503) }
     }
     if (pathname.startsWith('/api/')) return error('not_found', 404)
     return new Response('Not Found', { status: 404, headers: NO_STORE })

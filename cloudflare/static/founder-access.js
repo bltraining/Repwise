@@ -145,6 +145,89 @@
     }
   }
 
+  function completeInviteFromHash() {
+    var params = new URLSearchParams(location.hash.slice(1))
+    if (params.get('type') !== 'invite') return false
+
+    var accessToken = params.get('access_token') || ''
+    var refreshToken = params.get('refresh_token') || ''
+    history.replaceState(null, '', location.pathname + location.search)
+    login.classList.remove('on')
+
+    var overlay = node('div', 'ov on')
+    overlay.setAttribute('role', 'dialog')
+    overlay.setAttribute('aria-modal', 'true')
+    overlay.setAttribute('aria-label', 'Finaliser le compte Repwise')
+    overlay.style.zIndex = '1000'
+    var content = node('div', 'wrap')
+    content.style.paddingTop = '56px'
+    content.append(node('h1', '', 'Finaliser ton compte Repwise'))
+    content.append(node('p', 'sub', 'Choisis un mot de passe pour terminer la vérification de ton adresse.'))
+    var form = node('div', 'panel')
+    var first = node('input', 'tx')
+    first.type = 'password'
+    first.autocomplete = 'new-password'
+    first.minLength = 12
+    first.maxLength = 128
+    first.placeholder = 'Nouveau mot de passe (12 caractères minimum)'
+    var second = node('input', 'tx')
+    second.type = 'password'
+    second.autocomplete = 'new-password'
+    second.minLength = 12
+    second.maxLength = 128
+    second.placeholder = 'Confirmer le mot de passe'
+    var status = node('div', 'sub')
+    status.setAttribute('role', 'status')
+    var button = node('button', 'btn', 'Enregistrer le mot de passe')
+    button.type = 'button'
+    form.append(first, second, status, button)
+    content.append(form)
+    overlay.append(content)
+    document.body.append(overlay)
+
+    button.addEventListener('click', async function () {
+      status.textContent = ''
+      if (!accessToken || !refreshToken) {
+        status.textContent = 'Ce lien est incomplet ou expiré. Demande une nouvelle invitation.'
+        return
+      }
+      if (first.value.length < 12 || first.value.length > 128 || first.value !== second.value) {
+        status.textContent = 'Vérifie que les deux mots de passe correspondent et contiennent au moins 12 caractères.'
+        return
+      }
+      button.disabled = true
+      try {
+        const response = await fetch('/api/complete-founder-invite', {
+          method: 'POST',
+          credentials: 'same-origin',
+          cache: 'no-store',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ access_token: accessToken, refresh_token: refreshToken, password: first.value }),
+        })
+        first.value = ''
+        second.value = ''
+        if (response.status === 401 || response.status === 403) {
+          accessToken = ''
+          refreshToken = ''
+          throw new Error('Invitation expirée, déjà utilisée ou non autorisée.')
+        }
+        if (response.status === 400) throw new Error('Le mot de passe n’a pas été accepté. Essaie-en un autre.')
+        if (!response.ok) throw new Error('Impossible de terminer la création du compte. Réessaie dans quelques instants.')
+        accessToken = ''
+        refreshToken = ''
+        overlay.remove()
+        if (!await requestPanel()) throw new Error('Compte créé. Recharge la page ou reconnecte-toi.')
+      } catch (cause) {
+        status.textContent = cause.message || 'Impossible de terminer la création du compte.'
+      } finally {
+        button.disabled = false
+      }
+    })
+
+    first.focus()
+    return true
+  }
+
   avatar.textContent = 'RP'
   avatar.setAttribute('aria-label', 'Connexion Repwise')
   avatar.title = 'Connexion Repwise'
@@ -167,5 +250,5 @@
   var account = document.getElementById('set')
   if (account) account.classList.remove('on')
 
-  requestPanel().catch(function () { hidePanel() })
+  if (!completeInviteFromHash()) requestPanel().catch(function () { hidePanel() })
 })()

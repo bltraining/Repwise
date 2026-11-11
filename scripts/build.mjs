@@ -126,5 +126,5 @@ if (cloudflareDemoMode) {
 console.log(demoMode
   ? 'Demo build copied the isolated beta page and browser auth client; Cloudflare Pages Functions are sourced from /functions. No regular Repwise backend integrations are included.'
   : cloudflareDemoMode
-    ? 'Cloudflare build copied the original Repwise interface; the only backend routes are the owner-verified, read-only test session and dashboard.'
+    ? 'Cloudflare build copied the original Repwise interface; backend access is limited to the owner-verified test session, read-only dashboard, and invite completion.'
   : `Copied ${staticFiles.length} static inputs to dist; source/config files are excluded.`)

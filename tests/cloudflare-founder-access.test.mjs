@@ -116,6 +116,66 @@ test('only the exact server-configured UID receives the private read-only dashbo
   assert.equal(JSON.stringify(body).includes(env.SUPABASE_PUBLISHABLE_KEY), false)
 })
 
+test('invite completion verifies the owner, provisions only a missing coach profile, and stores session cookies', async t => {
+  const original = globalThis.fetch
+  const calls = []
+  let profileCreated = false
+  globalThis.fetch = async (input, init = {}) => {
+    const target = String(input)
+    const method = init.method || 'GET'
+    calls.push({ target, method, body: init.body })
+    if (target.endsWith('/auth/v1/user') && method === 'GET') {
+      return Response.json({ id: owner, email_confirmed_at: '2026-11-11T12:00:00Z' })
+    }
+    if (target.includes('/rest/v1/profils?')) return Response.json(profileCreated ? [{ id: owner, role: 'coach' }] : [])
+    if (target.endsWith('/rest/v1/profils') && method === 'POST') { profileCreated = true; return new Response(null, { status: 201 }) }
+    if (target.endsWith('/auth/v1/user') && method === 'PUT') return Response.json({ id: owner })
+    if (target.endsWith('/rest/v1/rpc/cassandre_private_api')) return Response.json([])
+    throw new Error('unexpected upstream request')
+  }
+  t.after(() => { globalThis.fetch = original })
+
+  const origin = 'https://repwise-founder-test.workers.dev'
+  const response = await worker.fetch(new Request(`${origin}/api/complete-founder-invite`, {
+    method: 'POST',
+    headers: { Origin: origin, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ access_token: 'invite-access', refresh_token: 'invite-refresh', password: 'test-password-long-enough' }),
+  }), env)
+
+  assert.equal(response.status, 200)
+  const responseBody = await response.text()
+  assert.deepEqual(JSON.parse(responseBody), { ok: true })
+  assert.equal(calls.some(call => call.target.endsWith('/rest/v1/profils') && call.method === 'POST'), true)
+  assert.equal(calls.some(call => call.target.endsWith('/auth/v1/user') && call.method === 'PUT'), true)
+  assert.match(response.headers.getSetCookie().join(';'), /HttpOnly; Secure; SameSite=Strict/)
+  assert.doesNotMatch(responseBody, /test-password-long-enough|invite-access|invite-refresh/)
+})
+
+test('invite completion refuses non-owner and cross-site requests before password or profile changes', async t => {
+  const original = globalThis.fetch
+  const calls = []
+  globalThis.fetch = async (input, init = {}) => {
+    calls.push({ target: String(input), method: init.method || 'GET' })
+    return Response.json({ id: coach, email_confirmed_at: '2026-11-11T12:00:00Z' })
+  }
+  t.after(() => { globalThis.fetch = original })
+
+  const origin = 'https://repwise-founder-test.workers.dev'
+  const body = JSON.stringify({ access_token: 'invite-access', refresh_token: 'invite-refresh', password: 'test-password-long-enough' })
+  const denied = await worker.fetch(new Request(`${origin}/api/complete-founder-invite`, {
+    method: 'POST', headers: { Origin: origin, 'Content-Type': 'application/json' }, body,
+  }), env)
+  assert.equal(denied.status, 403)
+  assert.equal(calls.some(call => call.method === 'PUT' || call.target.endsWith('/rest/v1/profils')), false)
+
+  const callsBeforeCrossSite = calls.length
+  const crossSite = await worker.fetch(new Request(`${origin}/api/complete-founder-invite`, {
+    method: 'POST', headers: { Origin: 'https://attacker.invalid', 'Content-Type': 'application/json' }, body,
+  }), env)
+  assert.equal(crossSite.status, 403)
+  assert.equal(calls.length, callsBeforeCrossSite)
+})
+
 test('founder reads and authenticated non-founder refusals are written to the private audit log', async t => {
   const original = globalThis.fetch
   const actions = []
@@ -210,8 +270,8 @@ test('test-only configuration is mandatory and production Supabase is rejected',
   assert.equal(calls, 0)
 })
 
-test('no task execution, generation, or administrative mutation endpoints exist', async () => {
-  for (const path of ['/api/cassandre-command', '/api/task-worker', '/api/agent-runner', '/api/stripe-checkout', '/api/whatsapp-webhook']) {
+test('no task execution, generation, invite bootstrap, or financial mutation endpoints exist', async () => {
+  for (const path of ['/api/cassandre-command', '/api/task-worker', '/api/agent-runner', '/api/stripe-checkout', '/api/whatsapp-webhook', '/api/bootstrap-founder-invite']) {
     const response = await worker.fetch(new Request(`https://repwise-founder-test.workers.dev${path}`, { method: 'POST' }), env)
     assert.equal(response.status, 404, path)
   }
