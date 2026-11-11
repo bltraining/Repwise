@@ -1,6 +1,6 @@
-const CACHE = 'repwise-cloudflare-preview-v1'
+const CACHE = 'repwise-cloudflare-preview-v2'
 const SHELL = [
-  '/', '/index.html', '/app.js', '/runtime-config.js', '/preview-mode.js',
+  '/', '/index.html', '/app.js', '/runtime-config.js', '/preview-mode.js', '/founder-access.js',
   '/manifest.webmanifest', '/cgv.html', '/confidentialite.html',
   '/mentions-legales.html', '/legal/legal.css', '/icons/icon-192.png',
   '/icons/icon-512.png', '/icons/apple-touch-icon.png',

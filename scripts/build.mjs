@@ -18,6 +18,7 @@ const staticFiles = cloudflareDemoMode ? [
   'cloudflare/static/_headers',
   'cloudflare/static/runtime-config.js',
   'cloudflare/static/preview-mode.js',
+  'cloudflare/static/founder-access.js',
   'cloudflare/static/sw.js',
 ] : demoMode ? [
   'demo/index.html',
@@ -60,6 +61,23 @@ for (const file of staticFiles) {
 }
 
 if (cloudflareDemoMode) {
+  function removeDivById(markup, id) {
+    const escapedId = id.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    const opening = new RegExp(`<div\\b(?=[^>]*\\bid=["']${escapedId}["'])[^>]*>`, 'i')
+    const match = opening.exec(markup)
+    if (!match) return markup
+    const tags = /<\/?div\b[^>]*>/gi
+    tags.lastIndex = match.index
+    let depth = 0
+    let tag
+    while ((tag = tags.exec(markup))) {
+      if (/^<\//.test(tag[0])) depth--
+      else depth++
+      if (depth === 0) return markup.slice(0, match.index) + markup.slice(tags.lastIndex)
+    }
+    throw new Error(`Cloudflare build could not remove private section ${id}`)
+  }
+
   const htmlFiles = ['index.html', 'cgv.html', 'confidentialite.html', 'mentions-legales.html']
   for (const file of htmlFiles) {
     const path = join(outputDir, file)
@@ -71,6 +89,17 @@ if (cloudflareDemoMode) {
       .replaceAll('href="/cgv"', 'href="/cgv.html"')
       .replaceAll('href="/confidentialite"', 'href="/confidentialite.html"')
       .replaceAll('href="/mentions-legales"', 'href="/mentions-legales.html"')
+    html = html.replace(/<button\b(?=[^>]*\bid="repwiseAssistantNav")[^>]*>[\s\S]*?<\/button>/i, '')
+    html = removeDivById(html, 'x')
+    const styleStart = html.indexOf('<style>')
+    const styleEnd = html.indexOf('</style>', styleStart)
+    if (styleStart >= 0 && styleEnd > styleStart) {
+      const publicCss = html.slice(styleStart + 7, styleEnd).split('\n')
+        .filter(line => !/repwiseAssistant|cass-agent|cass-meta|cass-card|cass-result|cass-pill|#x\.on/i.test(line))
+        .join('\n')
+      html = html.slice(0, styleStart + 7) + publicCss + html.slice(styleEnd)
+    }
+    if (/cassandre|assistant repwise/i.test(html)) throw new Error(`Internal panel label leaked into ${file}`)
     await writeFile(path, html)
   }
 
@@ -97,5 +126,5 @@ if (cloudflareDemoMode) {
 console.log(demoMode
   ? 'Demo build copied the isolated beta page and browser auth client; Cloudflare Pages Functions are sourced from /functions. No regular Repwise backend integrations are included.'
   : cloudflareDemoMode
-    ? 'Cloudflare build copied the original Repwise interface and legal/static assets in preview mode; Supabase and all backend integrations are disabled.'
+    ? 'Cloudflare build copied the original Repwise interface; the only backend routes are the owner-verified, read-only test session and dashboard.'
   : `Copied ${staticFiles.length} static inputs to dist; source/config files are excluded.`)
