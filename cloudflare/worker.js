@@ -43,6 +43,13 @@ function sameOrigin(request) {
   return request.headers.get('origin') === new URL(request.url).origin
 }
 
+function sameSiteRequest(request) {
+  const origin = request.headers.get('origin')
+  if (origin && origin !== new URL(request.url).origin) return false
+  const fetchSite = request.headers.get('sec-fetch-site')
+  return !fetchSite || fetchSite === 'same-origin' || fetchSite === 'none'
+}
+
 async function readJson(request) {
   if (request.headers.get('content-type')?.split(';')[0].trim() !== 'application/json') return null
   const raw = await request.text()
@@ -120,6 +127,25 @@ async function writeAudit(env, actor, action, targetType, targetId) {
   }
 }
 
+async function founderCoachProfile(env, userId) {
+  if (typeof env.SUPABASE_SERVICE_ROLE_KEY !== 'string' || !env.SUPABASE_SERVICE_ROLE_KEY) return { unavailable: true }
+  try {
+    const query = new URLSearchParams({ id: `eq.${userId}`, select: 'id,role', limit: '1' })
+    const response = await fetch(`${TEST_SUPABASE_URL}/rest/v1/profils?${query}`, {
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Accept-Profile': 'public',
+      },
+    })
+    if (!response.ok) return { unavailable: true }
+    const profiles = await response.json()
+    return { isCoach: Array.isArray(profiles) && profiles.some(profile => profile.id === userId && profile.role === 'coach') }
+  } catch {
+    return { unavailable: true }
+  }
+}
+
 async function ownerSession(request, env) {
   if (!sameOrigin(request)) return { response: error('request_refused', 403) }
   if (!configured(env)) return { response: error('service_unavailable', 503) }
@@ -147,6 +173,12 @@ async function ownerSession(request, env) {
   if (!verified.user) return { response: error('authentication_failed', 401) }
   if (verified.user.id !== env.CASSANDRE_OWNER_USER_ID) {
     await writeAudit(env, verified.user.id, 'founder_access_denied', 'session', 'owner-login')
+    return { response: error('access_denied', 403) }
+  }
+  const profile = await founderCoachProfile(env, verified.user.id)
+  if (profile.unavailable) return { response: error('service_unavailable', 503) }
+  if (!profile.isCoach) {
+    await writeAudit(env, verified.user.id, 'founder_profile_denied', 'profile', 'coach-role-required')
     return { response: error('access_denied', 403) }
   }
   await writeAudit(env, verified.user.id, 'founder_session_started', 'session', 'owner-login')
@@ -179,6 +211,12 @@ async function authenticatedOwner(request, env) {
     await writeAudit(env, checked.user.id, 'founder_access_denied', 'founder_panel', 'owner-check')
     return { response: error('access_denied', 403, clearCookies()) }
   }
+  const profile = await founderCoachProfile(env, checked.user.id)
+  if (profile.unavailable) return { response: error('service_unavailable', 503) }
+  if (!profile.isCoach) {
+    await writeAudit(env, checked.user.id, 'founder_profile_denied', 'profile', 'coach-role-required')
+    return { response: error('access_denied', 403, clearCookies()) }
+  }
   return { user: checked.user, cookies }
 }
 
@@ -199,6 +237,7 @@ async function readPrivateTable(env, table, params = {}) {
 }
 
 async function founderPanel(request, env) {
+  if (!sameSiteRequest(request)) return error('request_refused', 403)
   const auth = await authenticatedOwner(request, env)
   if (auth.response) return auth.response
 
@@ -238,6 +277,28 @@ async function founderPanel(request, env) {
   }, 200, auth.cookies.map(value => ['Set-Cookie', value]))
 }
 
+async function logoutSession(request, env) {
+  if (!sameOrigin(request)) return error('request_refused', 403)
+  const token = getCookie(request, ACCESS_COOKIE)
+  if (token) {
+    try {
+      const verified = await verifyAccessToken(env, token)
+      if (verified.user?.id && verified.user.id === env.CASSANDRE_OWNER_USER_ID) {
+        await writeAudit(env, verified.user.id, 'founder_session_ended', 'session', 'owner-logout')
+      }
+      if (env.SUPABASE_PUBLISHABLE_KEY) {
+        await fetch(`${TEST_SUPABASE_URL}/auth/v1/logout?scope=local`, {
+          method: 'POST',
+          headers: authHeaders(env, token),
+        })
+      }
+    } catch {
+      // Always clear local cookies, even if the Auth API is temporarily unavailable.
+    }
+  }
+  return json({ ok: true }, 200, clearCookies())
+}
+
 export default {
   async fetch(request, env = {}) {
     const { pathname } = new URL(request.url)
@@ -246,8 +307,7 @@ export default {
         try { return (await ownerSession(request, env)).response } catch { return error('service_unavailable', 503) }
       }
       if (request.method === 'DELETE') {
-        if (!sameOrigin(request)) return error('request_refused', 403)
-        return json({ ok: true }, 200, clearCookies())
+        try { return await logoutSession(request, env) } catch { return json({ ok: true }, 200, clearCookies()) }
       }
       return error('method_not_allowed', 405)
     }

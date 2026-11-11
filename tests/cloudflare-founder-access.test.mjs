@@ -10,6 +10,7 @@ const env = {
   CASSANDRE_READ_ONLY_MODE: 'true',
   SUPABASE_URL: url,
   SUPABASE_PUBLISHABLE_KEY: 'test-publishable-key',
+  SUPABASE_SERVICE_ROLE_KEY: 'test-server-only',
   CASSANDRE_OWNER_USER_ID: owner,
 }
 
@@ -40,6 +41,41 @@ test('anonymous visitor receives 401 and no private dashboard data', async t => 
   assert.equal(calls, 0)
 })
 
+test('cross-site dashboard requests are rejected before Supabase is called', async t => {
+  const original = globalThis.fetch
+  let calls = 0
+  globalThis.fetch = async () => { calls++; throw new Error('unexpected upstream request') }
+  t.after(() => { globalThis.fetch = original })
+
+  const response = await worker.fetch(new Request('https://repwise-founder-test.workers.dev/api/founder-panel', {
+    headers: { Origin: 'https://attacker.invalid', Cookie: 'repwise_access=stolen-token' },
+  }), env)
+  assert.equal(response.status, 403)
+  assert.equal(calls, 0)
+})
+
+test('logout revokes only the current Supabase session and clears secure cookies', async t => {
+  const original = globalThis.fetch
+  const calls = []
+  globalThis.fetch = async (input, init = {}) => {
+    calls.push({ url: String(input), method: init.method, authorization: init.headers?.Authorization })
+    if (String(input).endsWith('/auth/v1/user')) return Response.json({ id: owner })
+    if (String(input).endsWith('/auth/v1/logout?scope=local')) return new Response(null, { status: 204 })
+    return Response.json([])
+  }
+  t.after(() => { globalThis.fetch = original })
+
+  const origin = 'https://repwise-founder-test.workers.dev'
+  const response = await worker.fetch(new Request(`${origin}/api/repwise-session`, {
+    method: 'DELETE', headers: { Origin: origin, Cookie: 'repwise_access=founder-token' },
+  }), { ...env, SUPABASE_SERVICE_ROLE_KEY: 'test-server-only' })
+  assert.equal(response.status, 200)
+  const signOutCall = calls.find(call => call.url.endsWith('/auth/v1/logout?scope=local'))
+  assert.ok(signOutCall && signOutCall.method === 'POST')
+  assert.equal(signOutCall.authorization, 'Bearer founder-token')
+  assert.ok(response.headers.getSetCookie().every(value => /Max-Age=0/.test(value) && /HttpOnly; Secure; SameSite=Strict/.test(value)))
+})
+
 test('authenticated coach and client identities both receive 403 regardless of body claims', async t => {
   const original = globalThis.fetch
   globalThis.fetch = async () => Response.json({ id: coach })
@@ -58,9 +94,13 @@ test('authenticated coach and client identities both receive 403 regardless of b
 test('only the exact server-configured UID receives the private read-only dashboard', async t => {
   const original = globalThis.fetch
   const calls = []
-  globalThis.fetch = async input => {
-    calls.push(String(input))
-    return Response.json({ id: owner })
+  globalThis.fetch = async (input, init = {}) => {
+    const target = String(input)
+    calls.push(target)
+    if (target.endsWith('/auth/v1/user')) return Response.json({ id: owner })
+    if (target.includes('/rest/v1/profils?')) return Response.json([{ id: owner, role: 'coach' }])
+    if (target.endsWith('/rest/v1/rpc/cassandre_private_api')) return Response.json([])
+    throw new Error('unexpected upstream request')
   }
   t.after(() => { globalThis.fetch = original })
 
@@ -69,9 +109,10 @@ test('only the exact server-configured UID receives the private read-only dashbo
   assert.equal(response.status, 200)
   assert.equal(body.display_name, 'Cassandre')
   assert.equal(body.read_only, true)
-  assert.equal(body.data_available, false)
+  assert.equal(body.data_available, true)
   assert.deepEqual(body.agents.map(agent => agent.name), ['Commercial', 'Clients', 'Nutrition', 'Programmes', 'Technique', 'Financier'])
-  assert.ok(calls.every(call => call === `${url}/auth/v1/user`))
+  assert.ok(calls.includes(`${url}/auth/v1/user`))
+  assert.ok(calls.some(call => call.startsWith(`${url}/rest/v1/profils?`)))
   assert.equal(JSON.stringify(body).includes(env.SUPABASE_PUBLISHABLE_KEY), false)
 })
 
@@ -83,6 +124,7 @@ test('founder reads and authenticated non-founder refusals are written to the pr
     if (target.endsWith('/auth/v1/user')) {
       return Response.json({ id: targetUser })
     }
+    if (target.includes('/rest/v1/profils?')) return Response.json([{ id: targetUser, role: 'coach' }])
     if (target.endsWith('/rest/v1/rpc/cassandre_private_api')) {
       const call = JSON.parse(init.body)
       if (call.p_table === 'audit_log') actions.push(call.p_body.action)
@@ -109,7 +151,10 @@ test('login verifies the server-returned UID and keeps tokens in HttpOnly cookie
     if (String(input).includes('/auth/v1/token?grant_type=password')) {
       return Response.json({ access_token: 'test-access-token', refresh_token: 'test-refresh-token', expires_in: 3600 })
     }
-    return Response.json({ id: owner })
+    if (String(input).endsWith('/auth/v1/user')) return Response.json({ id: owner })
+    if (String(input).includes('/rest/v1/profils?')) return Response.json([{ id: owner, role: 'coach' }])
+    if (String(input).endsWith('/rest/v1/rpc/cassandre_private_api')) return Response.json([])
+    throw new Error('unexpected upstream request')
   }
   t.after(() => { globalThis.fetch = original })
 
@@ -121,6 +166,23 @@ test('login verifies the server-returned UID and keeps tokens in HttpOnly cookie
   ])
   assert.match(response.headers.getSetCookie().join(';'), /HttpOnly; Secure; SameSite=Strict/)
   assert.doesNotMatch(body, /test-access-token|test-refresh-token|Cassandre/)
+})
+
+test('even the configured UID is refused when its server-side profile is not coach', async t => {
+  const original = globalThis.fetch
+  globalThis.fetch = async input => {
+    if (String(input).includes('/auth/v1/token?grant_type=password')) {
+      return Response.json({ access_token: 'test-access-token', refresh_token: 'test-refresh-token', expires_in: 3600 })
+    }
+    if (String(input).endsWith('/auth/v1/user')) return Response.json({ id: owner })
+    if (String(input).includes('/rest/v1/profils?')) return Response.json([{ id: owner, role: 'client' }])
+    return Response.json([])
+  }
+  t.after(() => { globalThis.fetch = original })
+
+  const response = await login('founder@example.invalid')
+  assert.equal(response.status, 403)
+  assert.equal(response.headers.getSetCookie().length, 0)
 })
 
 test('login rejects a non-founder and ignores a claimed founder UID in the request', async t => {
