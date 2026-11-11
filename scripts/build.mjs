@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, stat } from 'node:fs/promises'
+import { cp, mkdir, readFile, rm, stat, writeFile } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
@@ -7,8 +7,18 @@ const demoMode = process.argv.includes('--demo')
 const cloudflareDemoMode = process.argv.includes('--cloudflare-demo')
 const outputDir = resolve(projectRoot, cloudflareDemoMode ? 'dist-cloudflare' : 'dist')
 const staticFiles = cloudflareDemoMode ? [
-  'cloudflare/static/index.html',
+  'index.html',
+  'app.js',
+  'cgv.html',
+  'confidentialite.html',
+  'mentions-legales.html',
+  'manifest.webmanifest',
+  'icons',
+  'legal',
   'cloudflare/static/_headers',
+  'cloudflare/static/runtime-config.js',
+  'cloudflare/static/preview-mode.js',
+  'cloudflare/static/sw.js',
 ] : demoMode ? [
   'demo/index.html',
   'demo/_headers',
@@ -49,8 +59,22 @@ for (const file of staticFiles) {
   await cp(join(projectRoot, file), join(outputDir, outputName), { recursive: true })
 }
 
+if (cloudflareDemoMode) {
+  const htmlFiles = ['index.html', 'cgv.html', 'confidentialite.html', 'mentions-legales.html']
+  for (const file of htmlFiles) {
+    const path = join(outputDir, file)
+    let html = await readFile(path, 'utf8')
+    html = html.replace('<script src="/vendor/supabase-2.45.4.min.js"></script>', '')
+      .replace(/<div id="runtimeConfigFailure"[\s\S]*?<\/div>/, '')
+      .replaceAll('href="/cgv"', 'href="/cgv.html"')
+      .replaceAll('href="/confidentialite"', 'href="/confidentialite.html"')
+      .replaceAll('href="/mentions-legales"', 'href="/mentions-legales.html"')
+    await writeFile(path, html)
+  }
+}
+
 console.log(demoMode
   ? 'Demo build copied the isolated beta page and browser auth client; Cloudflare Pages Functions are sourced from /functions. No regular Repwise backend integrations are included.'
   : cloudflareDemoMode
-    ? 'Cloudflare build copied only the script-free static demo and headers to dist-cloudflare; no Supabase, Netlify, Stripe, WhatsApp, or AI backend is included.'
+    ? 'Cloudflare build copied the original Repwise interface and legal/static assets in preview mode; Supabase and all backend integrations are disabled.'
   : `Copied ${staticFiles.length} static inputs to dist; source/config files are excluded.`)
