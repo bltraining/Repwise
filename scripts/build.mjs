@@ -66,11 +66,32 @@ if (cloudflareDemoMode) {
     let html = await readFile(path, 'utf8')
     html = html.replace('<script src="/vendor/supabase-2.45.4.min.js"></script>', '')
       .replace(/<div id="runtimeConfigFailure"[\s\S]*?<\/div>/, '')
+      .replace(/cassandre/g, 'repwiseAssistant')
+      .replace(/Cassandre/g, 'Assistant Repwise')
       .replaceAll('href="/cgv"', 'href="/cgv.html"')
       .replaceAll('href="/confidentialite"', 'href="/confidentialite.html"')
       .replaceAll('href="/mentions-legales"', 'href="/mentions-legales.html"')
     await writeFile(path, html)
   }
+
+  const appPath = join(outputDir, 'app.js')
+  let app = await readFile(appPath, 'utf8')
+  app = app.replace('if(b.dataset.v==="x"&&window.loadCassandre)window.loadCassandre()', '')
+    .replace('var CFG=window.REPW_SUPABASE_CONFIG;', 'var CFG=null;')
+    .replace('SB=window.supabase?window.supabase.createClient(CFG.url,CFG.key):null,LIVE=!!SB', 'SB=null,LIVE=false')
+    .replace('initCassandreAccess();', '')
+
+  const privateFlagsStart = app.indexOf('var CASSANDRE_READ_ONLY=')
+  const privateFlagsEnd = app.indexOf('\nfunction toast', privateFlagsStart)
+  if (privateFlagsStart < 0 || privateFlagsEnd < 0) throw new Error('Cloudflare preview could not isolate assistant controls')
+  app = app.slice(0, privateFlagsStart) + app.slice(privateFlagsEnd + 1)
+
+  const privateUiStart = app.indexOf('function casEl(')
+  const privateUiEnd = app.indexOf('function refreshPremium()', privateUiStart)
+  if (privateUiStart < 0 || privateUiEnd < 0) throw new Error('Cloudflare preview could not isolate assistant UI logic')
+  app = app.slice(0, privateUiStart) + app.slice(privateUiEnd)
+  if (/cassandre/i.test(app)) throw new Error('Internal assistant identifier leaked into the public app bundle')
+  await writeFile(appPath, app)
 }
 
 console.log(demoMode

@@ -1,6 +1,6 @@
 // Cloudflare static preview: deliberately never requests runtime config or Supabase.
 (function () {
-  window.REPW_SUPABASE_CONFIG = Object.freeze({ cassandreReadOnly: true })
+  window.REPW_SUPABASE_CONFIG = Object.freeze({ assistantReadOnly: true })
 
   var banner = document.createElement('aside')
   banner.setAttribute('role', 'status')
