@@ -1,6 +1,7 @@
 .netlify/
 node_modules/
 dist/
+dist-cloudflare/
 supabase/.temp/
 .env
 .env.*

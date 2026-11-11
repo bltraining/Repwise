@@ -4,7 +4,8 @@
   "type": "module",
   "scripts": {
     "build": "node scripts/build.mjs",
-    "build:demo": "node scripts/build.mjs --demo"
+    "build:demo": "node scripts/build.mjs --demo",
+    "build:cloudflare": "node scripts/build.mjs --cloudflare-demo"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.4.0",

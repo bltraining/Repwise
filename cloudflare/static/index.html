@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#211a16">
+  <title>Repwise + Cassandre — Démonstration</title>
+  <style>
+    :root{color-scheme:dark;--bg:#211a16;--panel:#30251f;--line:#49382e;--text:#f6eee7;--muted:#b9a99a;--accent:#ff925c;--green:#8bd0a0;font:15px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at 50% -15%,#4b2817,var(--bg) 55%);color:var(--text)}main{max-width:1080px;margin:auto;padding:28px 20px 60px}.bar{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}.brand{font-size:22px;font-weight:750;letter-spacing:-.04em}.brand span{color:var(--accent)}.badge,.tag{display:inline-flex;align-items:center;border:1px solid #765034;border-radius:99px;padding:5px 10px;color:#ffc18f;font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase}.hero{display:flex;align-items:end;justify-content:space-between;gap:24px;margin-bottom:24px}.hero h1{font-size:clamp(28px,5vw,42px);line-height:1.08;letter-spacing:-.05em;margin:10px 0}.muted{color:var(--muted);margin:0}.grid{display:grid;gap:14px}.stats{grid-template-columns:repeat(4,minmax(0,1fr));margin:18px 0 28px}.card{background:linear-gradient(160deg,#352920,var(--panel));border:1px solid var(--line);border-radius:16px;padding:18px;box-shadow:0 14px 36px #100b0870}.stat strong{display:block;font-size:28px;letter-spacing:-.04em}.stat small{color:var(--muted)}.section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:30px 0 14px}.section-head h2{font-size:20px;margin:0}.agents{grid-template-columns:repeat(3,minmax(0,1fr))}.agent{min-height:130px}.agent h3{margin:0 0 6px;font-size:16px}.state{color:var(--green);font-size:12px;font-weight:700}.split{grid-template-columns:1.2fr .8fr}.chart{height:115px;width:100%;margin-top:14px}.notice{border-color:#795431;background:#38291e}.disabled{border:1px solid var(--line);border-radius:10px;background:#29211c;color:#938477;padding:10px 12px;font:inherit;cursor:not-allowed}.pill{display:inline-block;border:1px solid var(--line);border-radius:8px;padding:5px 8px;margin:4px 5px 0 0;color:var(--muted);font-size:12px}.foot{margin-top:22px;font-size:12px;color:var(--muted)}
+    @media(max-width:760px){main{padding:20px 14px 40px}.stats{grid-template-columns:repeat(2,minmax(0,1fr))}.agents{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:1fr}.hero{align-items:start;flex-direction:column}.bar{align-items:start;flex-direction:column}}
+    @media(max-width:420px){.agents{grid-template-columns:1fr}.card{padding:15px}}
+  </style>
+</head>
+<body>
+<main>
+  <header class="bar"><div class="brand">rep<span>wise</span> <span style="color:var(--muted);font-weight:500">+ Cassandre</span></div><span class="badge">Démo autonome · données fictives</span></header>
+  <section class="hero"><div><span class="tag">Espace coach</span><h1>Bonjour, Baptiste</h1><p class="muted">Aperçu de Repwise et du centre de direction Cassandre.</p></div><span class="pill">Aucun compte connecté</span></section>
+
+  <section aria-label="Indicateurs de démonstration" class="grid stats">
+    <article class="card stat"><small>Clients actifs · fictif</small><strong>128</strong><small>Exemple de tableau de bord</small></article>
+    <article class="card stat"><small>Séances cette semaine · fictif</small><strong>43</strong><small>Donnée de démonstration</small></article>
+    <article class="card stat"><small>Programmes suivis · fictif</small><strong>27</strong><small>Donnée de démonstration</small></article>
+    <article class="card stat"><small>Alertes à examiner · fictif</small><strong>3</strong><small>Aucune alerte réelle</small></article>
+  </section>
+
+  <div class="section-head"><h2>Cassandre — centre de direction</h2><span class="state">APERÇU STATIQUE</span></div>
+  <section class="grid split">
+    <article class="card"><span class="tag">Synthèse fictive</span><h3>La semaine en un regard</h3><p class="muted">Les indicateurs ci-dessus illustrent l’interface. Cassandre n’a collecté ni analysé de données réelles.</p><svg class="chart" viewBox="0 0 640 110" role="img" aria-label="Courbe décorative de démonstration"><path d="M8 88 C70 82 76 48 142 59 S220 82 280 47 S372 63 420 29 S520 58 632 12" fill="none" stroke="#ff925c" stroke-width="4" stroke-linecap="round"/><path d="M8 100 H632" stroke="#49382e" stroke-width="2"/></svg><small class="muted">Courbe illustrative, sans données enregistrées</small></article>
+    <article class="card notice"><span class="tag">Mode sûr</span><h3>Services en direct désactivés</h3><p class="muted">Cette démo ne contacte aucune base, aucun modèle IA et aucun service de paiement ou de messagerie.</p><span class="pill">IA : arrêtée</span><span class="pill">Stripe : désactivé</span><span class="pill">WhatsApp : désactivé</span></article>
+  </section>
+
+  <div class="section-head"><h2>Les six agents</h2><span class="muted">Aucune mission n’est exécutée</span></div>
+  <section class="grid agents">
+    <article class="card agent"><span class="state">APERÇU</span><h3>Commercial</h3><p class="muted">Ventes et conversions</p></article>
+    <article class="card agent"><span class="state">APERÇU</span><h3>Clients</h3><p class="muted">Activité et fidélisation</p></article>
+    <article class="card agent"><span class="state">APERÇU</span><h3>Nutrition</h3><p class="muted">Plans et journaux</p></article>
+    <article class="card agent"><span class="state">APERÇU</span><h3>Programmes</h3><p class="muted">Qualité des entraînements</p></article>
+    <article class="card agent"><span class="state">APERÇU</span><h3>Technique</h3><p class="muted">Incidents et intégrations</p></article>
+    <article class="card agent"><span class="state">APERÇU</span><h3>Financier</h3><p class="muted">Indicateurs, sans action financière</p></article>
+  </section>
+
+  <div class="section-head"><h2>Centre de commande</h2><span class="pill">Authentification absente</span></div>
+  <section class="card"><p class="muted">Les commandes administratives nécessitent une authentification serveur et ne sont pas disponibles dans cette démonstration.</p><button class="disabled" type="button" disabled aria-disabled="true">Commande Cassandre indisponible en démo</button><p class="foot">Tout le contenu de cette page est fictif. Cette page ne contient aucun script ni appel réseau.</p></section>
+</main>
+</body>
+</html>
