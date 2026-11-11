@@ -75,6 +75,34 @@ test('only the exact server-configured UID receives the private read-only dashbo
   assert.equal(JSON.stringify(body).includes(env.SUPABASE_PUBLISHABLE_KEY), false)
 })
 
+test('founder reads and authenticated non-founder refusals are written to the private audit log', async t => {
+  const original = globalThis.fetch
+  const actions = []
+  globalThis.fetch = async (input, init = {}) => {
+    const target = String(input)
+    if (target.endsWith('/auth/v1/user')) {
+      return Response.json({ id: targetUser })
+    }
+    if (target.endsWith('/rest/v1/rpc/cassandre_private_api')) {
+      const call = JSON.parse(init.body)
+      if (call.p_table === 'audit_log') actions.push(call.p_body.action)
+      return Response.json([])
+    }
+    throw new Error('unexpected upstream request')
+  }
+  t.after(() => { globalThis.fetch = original })
+
+  let targetUser = coach
+  const denied = await getPanel('valid-coach-token', { ...env, SUPABASE_SERVICE_ROLE_KEY: 'test-server-only' })
+  assert.equal(denied.status, 403)
+  assert.ok(actions.includes('founder_access_denied'))
+
+  targetUser = owner
+  const allowed = await getPanel('valid-founder-token', { ...env, SUPABASE_SERVICE_ROLE_KEY: 'test-server-only' })
+  assert.equal(allowed.status, 200)
+  assert.ok(actions.includes('founder_panel_read'))
+})
+
 test('login verifies the server-returned UID and keeps tokens in HttpOnly cookies', async t => {
   const original = globalThis.fetch
   globalThis.fetch = async input => {

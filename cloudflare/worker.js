@@ -99,6 +99,27 @@ async function refreshTokens(env, refreshToken) {
   return { tokens }
 }
 
+async function writeAudit(env, actor, action, targetType, targetId) {
+  if (typeof env.SUPABASE_SERVICE_ROLE_KEY !== 'string' || !env.SUPABASE_SERVICE_ROLE_KEY) return false
+  try {
+    const response = await fetch(`${TEST_SUPABASE_URL}/rest/v1/rpc/cassandre_private_api`, {
+      method: 'POST',
+      headers: {
+        apikey: env.SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${env.SUPABASE_SERVICE_ROLE_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_table: 'audit_log', p_method: 'POST', p_params: {},
+        p_body: { actor, action, target_type: targetType, target_id: targetId, details: {} },
+      }),
+    })
+    return response.ok
+  } catch {
+    return false
+  }
+}
+
 async function ownerSession(request, env) {
   if (!sameOrigin(request)) return { response: error('request_refused', 403) }
   if (!configured(env)) return { response: error('service_unavailable', 503) }
@@ -125,8 +146,10 @@ async function ownerSession(request, env) {
   if (verified.unavailable) return { response: error('service_unavailable', 503) }
   if (!verified.user) return { response: error('authentication_failed', 401) }
   if (verified.user.id !== env.CASSANDRE_OWNER_USER_ID) {
+    await writeAudit(env, verified.user.id, 'founder_access_denied', 'session', 'owner-login')
     return { response: error('access_denied', 403) }
   }
+  await writeAudit(env, verified.user.id, 'founder_session_started', 'session', 'owner-login')
   return { response: json({ ok: true }, 200, sessionCookies(tokens)) }
 }
 
@@ -153,6 +176,7 @@ async function authenticatedOwner(request, env) {
 
   if (!checked.user) return { response: error('authentication_required', 401, clearCookies()) }
   if (checked.user.id !== env.CASSANDRE_OWNER_USER_ID) {
+    await writeAudit(env, checked.user.id, 'founder_access_denied', 'founder_panel', 'owner-check')
     return { response: error('access_denied', 403, clearCookies()) }
   }
   return { user: checked.user, cookies }
@@ -198,6 +222,8 @@ async function founderPanel(request, env) {
       status: 'Désactivé en bêta',
     }))
     : AGENT_SEED.map(agent => ({ ...agent, status: 'Désactivé en bêta' }))
+
+  await writeAudit(env, owner, 'founder_panel_read', 'founder_panel', 'read-only')
 
   return json({
     display_name: 'Cassandre',

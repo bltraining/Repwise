@@ -82,6 +82,7 @@
     logout.addEventListener('click', signOut)
     content.append(logout)
     panel.append(content)
+    document.querySelector('.wrap')?.append(panel)
     nav.append(tab)
 
     tab.addEventListener('click', function () {
