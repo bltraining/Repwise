@@ -1,5 +1,6 @@
 import test from 'node:test'
 import assert from 'node:assert/strict'
+import { readFile } from 'node:fs/promises'
 import worker from '../cloudflare/worker.js'
 
 const url = 'https://qlwlyectatosrelqynkz.supabase.co'
@@ -271,8 +272,15 @@ test('test-only configuration is mandatory and production Supabase is rejected',
 })
 
 test('no task execution, generation, invite bootstrap, or financial mutation endpoints exist', async () => {
-  for (const path of ['/api/cassandre-command', '/api/task-worker', '/api/agent-runner', '/api/stripe-checkout', '/api/whatsapp-webhook', '/api/bootstrap-founder-invite']) {
+  for (const path of ['/api/cassandre-command', '/api/task-worker', '/api/agent-runner', '/api/stripe-checkout', '/api/whatsapp-webhook', '/api/bootstrap-founder-invite', '/api/resend-founder-recovery']) {
     const response = await worker.fetch(new Request(`https://repwise-founder-test.workers.dev${path}`, { method: 'POST' }), env)
     assert.equal(response.status, 404, path)
   }
+})
+
+test('founder password setup handles invite and recovery links without browser-stored sessions', async () => {
+  const source = await readFile(new URL('../cloudflare/static/founder-access.js', import.meta.url), 'utf8')
+  assert.match(source, /authFlow !== 'invite' && authFlow !== 'recovery'/)
+  assert.match(source, /history\.replaceState\(null, '', location\.pathname \+ location\.search\)/)
+  assert.match(source, /credentials: 'same-origin'/)
 })

@@ -147,7 +147,8 @@
 
   function completeInviteFromHash() {
     var params = new URLSearchParams(location.hash.slice(1))
-    if (params.get('type') !== 'invite') return false
+    var authFlow = params.get('type')
+    if (authFlow !== 'invite' && authFlow !== 'recovery') return false
 
     var accessToken = params.get('access_token') || ''
     var refreshToken = params.get('refresh_token') || ''
@@ -162,7 +163,9 @@
     var content = node('div', 'wrap')
     content.style.paddingTop = '56px'
     content.append(node('h1', '', 'Finaliser ton compte Repwise'))
-    content.append(node('p', 'sub', 'Choisis un mot de passe pour terminer la vérification de ton adresse.'))
+    content.append(node('p', 'sub', authFlow === 'recovery'
+      ? 'Choisis un nouveau mot de passe pour accéder à ton espace.'
+      : 'Choisis un mot de passe pour terminer la vérification de ton adresse.'))
     var form = node('div', 'panel')
     var first = node('input', 'tx')
     first.type = 'password'
@@ -188,7 +191,7 @@
     button.addEventListener('click', async function () {
       status.textContent = ''
       if (!accessToken || !refreshToken) {
-        status.textContent = 'Ce lien est incomplet ou expiré. Demande une nouvelle invitation.'
+        status.textContent = 'Ce lien est incomplet ou expiré. Demande un nouveau lien.'
         return
       }
       if (first.value.length < 12 || first.value.length > 128 || first.value !== second.value) {
@@ -209,7 +212,7 @@
         if (response.status === 401 || response.status === 403) {
           accessToken = ''
           refreshToken = ''
-          throw new Error('Invitation expirée, déjà utilisée ou non autorisée.')
+          throw new Error('Ce lien a expiré ou a déjà été utilisé. Demande un nouveau lien.')
         }
         if (response.status === 400) throw new Error('Le mot de passe n’a pas été accepté. Essaie-en un autre.')
         if (!response.ok) throw new Error('Impossible de terminer la création du compte. Réessaie dans quelques instants.')
